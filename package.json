@@ -1,7 +1,7 @@
 {
   "name": "clip-history",
   "main": "./lib/main",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Paste from clipboard history like emacs' kill-ring",
   "keywords": [],
   "repository": "https://github.com/t9md/atom-clip-history",
