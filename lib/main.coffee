@@ -3,11 +3,13 @@ settings   = require './settings'
 
 module.exports =
   config: settings.config
-  disposables:     null
-  history:         null
-  lastPastedRange: null
-  clipboardWrite:  null
-  flasher:         null
+
+  disposables:       null
+  history:           null
+  lastPastedRange:   null
+  clipboardWrite:    null
+  flasher:           null
+  pasteSubscription: null
 
   activate: (state) ->
     @disposables = new CompositeDisposable
@@ -50,6 +52,7 @@ module.exports =
     @disposables.dispose()
     if @clipboardWrite?
       atom.clipboard.write = @clipboardWrite
+    @pasteSubscription?.dispose()
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
