@@ -4,14 +4,14 @@ config =
   max:
     order: 11
     type: 'integer'
-    default: 100
+    default: 10
     minimum: 1
-    description: "number of history to remember"
+    description: "Number of history to remember"
   flashOnPaste:
     order: 21
     type: 'boolean'
     default: true
-    description: "flash when pasted"
+    description: "Flash when pasted"
   flashDurationMilliSeconds:
     order: 22
     type: 'integer'
