@@ -1,12 +1,13 @@
 {CompositeDisposable} = require 'atom'
-settings   = require './settings'
+_ = require 'underscore-plus'
+settings = require './settings'
 
 module.exports =
   config: settings.config
 
   disposables:        null
   history:            null
-  lastPastedRange:    null
+  lastPastedRanges:   null
   lastPastedText:     null
   atomClipboardWrite: null
   flasher:            null
@@ -18,7 +19,10 @@ module.exports =
     History = require './history'
     @history = new History(100)
 
-    @lastPastedRange = {}
+    @lastPastedRanges = {}
+
+    texts = ['111', '222', '333']
+    @history.add {text} for text in texts
 
     # Extending atom's native clipborad
     @atomClipboardWrite = atom.clipboard.write.bind(atom.clipboard)
@@ -41,7 +45,7 @@ module.exports =
     @locked
 
   dump: ->
-    console.log @lastPastedRange[@getEditor().getLastCursor().id]
+    console.log @lastPastedRanges[@getEditor().getLastCursor().id]
     @history.dump()
 
   clear: ->
@@ -49,10 +53,10 @@ module.exports =
 
   deactivate: ->
     @lastPastedText = null
-    @disposables.dispose()
     if @atomClipboardWrite?
       atom.clipboard.write = @atomClipboardWrite
     @pasteSubscription?.dispose()
+    @disposables.dispose()
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
@@ -64,18 +68,28 @@ module.exports =
     editor = cursor.editor
     newRange = editor.setTextInBufferRange range, text
     if settings.get('flashOnPaste')
-      @getFlasher().flash editor, newRange
-    @lastPastedRange[cursor.id] = newRange
+      @getFlasher().register editor, newRange
+
+    marker = editor.markBufferRange newRange,
+      invalidate: 'never'
+      persistent: false
+
+    @lastPastedRanges[cursor.id]?.destroy()
+    @lastPastedRanges[cursor.id] = marker
 
   # callback() need to return Range to be replaced.
   setTextForCursors: (text, callback) ->
+    editor = @getEditor()
     pasted = null
 
     @lock()
-    for cursor in @getEditor().getCursors()
-      break unless range = callback(cursor)
-      pasted = true
-      @setText cursor, range, text
+    editor.transact =>
+      for cursor in @getEditor().getCursors()
+        break unless range = callback(cursor)
+        pasted = true
+        @setText cursor, range, text
+      if settings.get('flashOnPaste')
+        @getFlasher().flash settings.get('flashDurationMilliSeconds')
     @unLock()
     @lastPastedText = text if pasted
 
@@ -83,7 +97,8 @@ module.exports =
     @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>
       return if @isLocked()
       # console.log "onDidChange clear subscription!"
-      @lastPastedRange = {}
+      marker.destroy() for cursor, marker in @lastPastedRanges
+      @lastPastedRanges = {}
       @history.resetIndex()
 
       @pasteSubscription.dispose()
@@ -94,7 +109,7 @@ module.exports =
       when 'current'
         (cursor) -> cursor.selection.getBufferRange()
       when 'lastPasted'
-        (cursor) => @lastPastedRange[cursor.id]
+        (cursor) => @lastPastedRanges[cursor.id]?.getBufferRange()
 
   paste: (options={}) ->
     return unless editor = @getEditor()

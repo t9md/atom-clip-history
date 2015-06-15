@@ -1,22 +1,24 @@
-settings = require './settings'
-
 module.exports =
 class Flasher
-  @flash: (editor, range) =>
-    @clear()
-
-    marker = editor.markBufferRange range,
+  constructor: (@editor, range) ->
+    @marker = @editor.markBufferRange range,
       invalidate: 'never'
       persistent: false
 
-    @decoration = editor.decorateMarker marker,
+  flash: (duration) ->
+    @decoration = @editor.decorateMarker @marker,
       type: 'highlight'
       class: "clip-history-pasted-range"
 
-    @timeoutID = setTimeout  =>
+    setTimeout  =>
       @decoration.getMarker().destroy()
-    , settings.get('flashDurationMilliSeconds')
+    , duration
 
-  @clear: =>
-    @decoration?.getMarker().destroy()
-    clearTimeout @timeoutID
+  @register: (editor, range) ->
+    @flashers ?= []
+    @flashers.push new this(editor, range)
+
+  @flash: (duration) ->
+    for flasher in @flashers
+      flasher.flash(duration)
+    @flashers = null
