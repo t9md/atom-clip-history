@@ -21,8 +21,8 @@ module.exports =
 
     @lastPastedRanges = {}
 
-    texts = ['111', '222', '333']
-    @history.add {text} for text in texts
+    # texts = ['111', '222', '333']
+    # @history.add {text} for text in texts
 
     # Extending atom's native clipborad
     @atomClipboardWrite = atom.clipboard.write.bind(atom.clipboard)
@@ -96,6 +96,7 @@ module.exports =
   registerCleanUp: ->
     @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>
       return if @isLocked()
+
       # console.log "onDidChange clear subscription!"
       marker.destroy() for cursor, marker in @lastPastedRanges
       @lastPastedRanges = {}
