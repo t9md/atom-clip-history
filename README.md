@@ -10,14 +10,15 @@ Paste from clipboard history like emacs' kill-ring
 * Visually highlight(flash) pasted range.
 
 # How to use
+
 1. Paste clipboard entry by `clip-history:paste`
-2. Just after `clip-history:paste`, execute `clip-history:paste-older` to paste older clipboard entry. You can repeat `clip-history:paste-older` until you get what you want.
+2. Continue `clip-history:paste` until you get entry you want.
+3. (optional) you can paste last pasted text with `clip-history:paste-last`.
 
 # Commands
 
-* `clip-history:paste`: Paste
-* `clip-history:paste-older`: Paste older entry, works only just after `clip-history:paste`, otherwise it does nothing.
-* `clip-history:clear`: Clear history entries.
+* `clip-history:paste`: Paste. Continuous execution without moving cursor pops older clipborad entry.
+* `clip-history:paste-laste`: Paste last pasted text.
 
 # Keymap
 No keymap by default.
@@ -27,7 +28,7 @@ e.g.
 ```coffeescript
 'atom-text-editor:not([mini])':
   'ctrl-y': 'clip-history:paste'
-  'cmd-y':  'clip-history:paste-older'
+  'ctrl-Y': 'clip-history:paste-last'
 ```
 
 # Similar packages

@@ -4,12 +4,13 @@ settings   = require './settings'
 module.exports =
   config: settings.config
 
-  disposables:       null
-  history:           null
-  lastPastedRange:   null
-  clipboardWrite:    null
-  flasher:           null
-  pasteSubscription: null
+  disposables:        null
+  history:            null
+  lastPastedRange:    null
+  lastPastedText:     null
+  atomClipboardWrite: null
+  flasher:            null
+  pasteSubscription:  null
 
   activate: (state) ->
     @disposables = new CompositeDisposable
@@ -18,19 +19,17 @@ module.exports =
     @history = new History(100)
 
     @lastPastedRange = {}
-    @extendClipboard()
 
-    @disposables.add atom.commands.add 'atom-workspace',
-      'clip-history:paste':       => @paste()
-      'clip-history:paste-older': => @pasteOlder()
-      'clip-history:clear':       => @clear()
-
-  extendClipboard: ->
-    clipboard = atom.clipboard
-    @clipboardWrite = clipboard.write
+    # Extending atom's native clipborad
+    @atomClipboardWrite = atom.clipboard.write.bind(atom.clipboard)
     atom.clipboard.write = (text, metadata) =>
       @history.add({text, metadata})
-      @clipboardWrite.call(clipboard, text, metadata)
+      @atomClipboardWrite(text, metadata)
+
+    @disposables.add atom.commands.add 'atom-workspace',
+      'clip-history:paste':      => @paste()
+      'clip-history:paste-last': => @paste(last: true)
+      'clip-history:clear':      => @clear()
 
   lock: ->
     @locked = true
@@ -49,9 +48,10 @@ module.exports =
     @history.clear()
 
   deactivate: ->
+    @lastPastedText = null
     @disposables.dispose()
-    if @clipboardWrite?
-      atom.clipboard.write = @clipboardWrite
+    if @atomClipboardWrite?
+      atom.clipboard.write = @atomClipboardWrite
     @pasteSubscription?.dispose()
 
   getEditor: ->
@@ -60,10 +60,6 @@ module.exports =
   getFlasher: ->
     @flasher ?= require './flasher'
 
-  resetState: ->
-    @lastPastedRange = {}
-    @history.resetIndex()
-
   setText: (cursor, range, text) ->
     editor = cursor.editor
     newRange = editor.setTextInBufferRange range, text
@@ -71,32 +67,51 @@ module.exports =
       @getFlasher().flash editor, newRange
     @lastPastedRange[cursor.id] = newRange
 
-  paste: ->
-    return unless editor = @getEditor()
-    return unless text = @history.getLast()?.text
-
-    @resetState()
-    @pasteSubscription?.dispose()
-
-    for cursor in editor.getCursors()
-      range = cursor.selection.getBufferRange()
-      @setText cursor, range, text
-
-    @pasteSubscription = editor.onDidChangeCursorPosition (event) =>
-      return if @isLocked()
-      @resetState()
-      # @dump()
-      @pasteSubscription.dispose()
-    # @dump()
-
-  pasteOlder: ->
-    return unless editor = @getEditor()
-    return unless text = @history.getOlder()?.text
+  # callback() need to return Range to be replaced.
+  setTextForCursors: (text, callback) ->
+    pasted = null
 
     @lock()
-    for cursor in editor.getCursors()
-      break unless range = @lastPastedRange[cursor.id]
+    for cursor in @getEditor().getCursors()
+      break unless range = callback(cursor)
+      pasted = true
       @setText cursor, range, text
-
     @unLock()
-    # @dump()
+    @lastPastedText = text if pasted
+
+  registerCleanUp: ->
+    @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>
+      return if @isLocked()
+      # console.log "onDidChange clear subscription!"
+      @lastPastedRange = {}
+      @history.resetIndex()
+
+      @pasteSubscription.dispose()
+      @pasteSubscription = null
+
+  getRangeProvider: (rangeType) ->
+    switch rangeType
+      when 'current'
+        (cursor) -> cursor.selection.getBufferRange()
+      when 'lastPasted'
+        (cursor) => @lastPastedRange[cursor.id]
+
+  paste: (options={}) ->
+    return unless editor = @getEditor()
+
+    rangeType = null
+    if options.last?
+      text = @lastPastedText
+      rangeType = 'current'
+    else
+      text = @history.getNext()?.text
+    return unless text
+
+    if not @pasteSubscription?
+      # First time
+      rangeType ?= 'current'
+      @registerCleanUp()
+    else
+      rangeType ?= 'lastPasted'
+
+    @setTextForCursors text, @getRangeProvider(rangeType)

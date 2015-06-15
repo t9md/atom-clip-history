@@ -33,11 +33,10 @@ class History
       current = if @index is i then '> ' else '  '
       console.log "#{current}#{i} #{entry.text}"
 
-  getLast: (index) ->
-    _.last @entries
-
-  getOlder: ->
-    @index -= 1
-    if @index < 0
-      @index = @entries.length - 1
-    @get @index
+  getNext: ->
+    entry = @get @index
+    if entry
+      @index -= 1
+      if @index < 0
+        @index = @entries.length - 1
+    entry
