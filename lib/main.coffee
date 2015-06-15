@@ -80,18 +80,19 @@ module.exports =
   # callback() need to return Range to be replaced.
   setTextForCursors: (text, callback) ->
     editor = @getEditor()
-    pasted = null
 
     @lock()
     editor.transact =>
-      for cursor in @getEditor().getCursors()
-        break unless range = callback(cursor)
-        pasted = true
+      for cursor in editor.getCursors()
+        range = callback(cursor)
+        unless range
+          trhow "hoge"
         @setText cursor, range, text
-      if settings.get('flashOnPaste')
-        @getFlasher().flash settings.get('flashDurationMilliSeconds')
     @unLock()
-    @lastPastedText = text if pasted
+
+    @lastPastedText = text
+    if settings.get('flashOnPaste')
+      @getFlasher().flash settings.get('flashDurationMilliSeconds')
 
   registerCleanUp: ->
     @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>
