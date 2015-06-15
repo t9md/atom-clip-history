@@ -1,5 +1,6 @@
 ## 0.1.3 - Improve
 * [FIX] Flash and paste was broken when multi cursors.
+* Update gif anime and doc.
 
 ## 0.1.2 - Improve
 * [breaking] `clip-history:paste-older` no longer available.

@@ -2,12 +2,13 @@
 
 Paste from clipboard history like emacs' kill-ring
 
-![gif](https://raw.githubusercontent.com/t9md/t9md/a34a6ce5f1ac5535557c7b45496197b31435d03f/img/atom-clip-history.gif)
+![gif](https://raw.githubusercontent.com/t9md/t9md/2453c4abea50741938bce79b9087e4845e8b66d1/img/atom-clip-history.gif)
 
 # Features
 
-* Like Emacs' or Bash's kill-ring, you can paste older clipboard entry.
+* Paste old clipboard entry.
 * Visually highlight(flash) pasted range.
+* Multi cursor support.
 
 # How to use
 
@@ -40,4 +41,6 @@ e.g.
 
 # TODO
 
-* [ ] Make configurable flash duration.
+* [x] Make configurable flash duration.
+* [x] Multi cursor support
+* [x] Use marker instead of range to track original range in multi cursor situation.
