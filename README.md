@@ -18,7 +18,9 @@ Paste from clipboard history like emacs' kill-ring
 # Commands
 
 * `clip-history:paste`: Paste. Continuous execution without moving cursor pops older clipborad entry.
-* `clip-history:paste-laste`: Paste last pasted text.
+* `clip-history:paste-last`: Paste last pasted text.
+* `clip-history:clear`: Clear clipboard history.
+
 
 # Keymap
 No keymap by default.
