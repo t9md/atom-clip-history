@@ -1,3 +1,8 @@
+## 0.1.4 - Improve
+* [FIX] `max` configuration is not respected.
+* Add config for color style of flashing.
+* Use `Marker::copy()` instead of duplicately create marker for flashing.
+
 ## 0.1.3 - Improve
 * [FIX] Flash and paste was broken when multi cursors.
 * Update gif anime and doc.

@@ -1,7 +1,22 @@
 @import "ui-variables";
 
 atom-text-editor::shadow {
-  .clip-history-pasted-range .region {
+  .clip-history-info .region {
+    background-color: @background-color-info;
+  }
+  .clip-history-success .region {
+    background-color: @background-color-success;
+  }
+  .clip-history-warning .region {
+    background-color: @background-color-warning;
+  }
+  .clip-history-error .region {
+    background-color: @background-color-error;
+  }
+  .clip-history-highlight .region {
+    background-color: @background-color-highlight;
+  }
+  .clip-history-selected .region {
     background-color: @background-color-selected;
   }
 }

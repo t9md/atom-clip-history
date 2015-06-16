@@ -17,7 +17,7 @@ module.exports =
     @disposables = new CompositeDisposable
 
     History = require './history'
-    @history = new History(100)
+    @history = new History(settings.get('max'))
 
     @lastPastedRanges = {}
 
@@ -67,8 +67,6 @@ module.exports =
   setText: (cursor, range, text) ->
     editor = cursor.editor
     newRange = editor.setTextInBufferRange range, text
-    if settings.get('flashOnPaste')
-      @getFlasher().register editor, newRange
 
     marker = editor.markBufferRange newRange,
       invalidate: 'never'
@@ -76,6 +74,9 @@ module.exports =
 
     @lastPastedRanges[cursor.id]?.destroy()
     @lastPastedRanges[cursor.id] = marker
+
+    if settings.get('flashOnPaste')
+      @getFlasher().register editor, marker.copy()
 
   # callback() need to return Range to be replaced.
   setTextForCursors: (text, callback) ->
@@ -92,7 +93,9 @@ module.exports =
 
     @lastPastedText = text
     if settings.get('flashOnPaste')
-      @getFlasher().flash settings.get('flashDurationMilliSeconds')
+      @getFlasher().flash
+        color:    settings.get('flashColor')
+        duration: settings.get('flashDurationMilliSeconds')
 
   registerCleanUp: ->
     @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>

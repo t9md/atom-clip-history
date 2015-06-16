@@ -1,24 +1,21 @@
 module.exports =
 class Flasher
-  constructor: (@editor, range) ->
-    @marker = @editor.markBufferRange range,
-      invalidate: 'never'
-      persistent: false
+  constructor: (@editor, @marker) ->
 
-  flash: (duration) ->
+  flash: ({color, duration}) ->
     @decoration = @editor.decorateMarker @marker,
       type: 'highlight'
-      class: "clip-history-pasted-range"
+      class: "clip-history-#{color}"
 
     setTimeout  =>
       @decoration.getMarker().destroy()
     , duration
 
-  @register: (editor, range) ->
+  @register: (editor, marker) ->
     @flashers ?= []
-    @flashers.push new this(editor, range)
+    @flashers.push new this(editor, marker)
 
-  @flash: (duration) ->
+  @flash: (options) ->
     for flasher in @flashers
-      flasher.flash(duration)
+      flasher.flash(options)
     @flashers = null
