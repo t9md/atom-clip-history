@@ -1,3 +1,6 @@
+## 0.1.5 - [PRE RELEASE] Improve
+* Refactor
+
 ## 0.1.4 - Improve
 * [FIX] `max` configuration is not respected.
 * Add config for color style of flashing.

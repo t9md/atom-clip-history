@@ -78,17 +78,13 @@ module.exports =
     if settings.get('flashOnPaste')
       @getFlasher().register editor, marker.copy()
 
-  # callback() need to return Range to be replaced.
-  setTextForCursors: (text, callback) ->
+  setTextForCursors: (text, rangeProider) ->
     editor = @getEditor()
 
     @lock()
     editor.transact =>
       for cursor in editor.getCursors()
-        range = callback(cursor)
-        unless range
-          trhow "hoge"
-        @setText cursor, range, text
+        @setText cursor, rangeProider(cursor), text
     @unLock()
 
     @lastPastedText = text
@@ -105,7 +101,6 @@ module.exports =
       marker.destroy() for cursor, marker in @lastPastedRanges
       @lastPastedRanges = {}
       @history.resetIndex()
-
       @pasteSubscription.dispose()
       @pasteSubscription = null
 
