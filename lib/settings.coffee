@@ -12,13 +12,18 @@ config =
     type: 'boolean'
     default: true
     description: "Flash when pasted"
-  flashDurationMilliSeconds:
+  flashPersist:
     order: 22
+    type: 'boolean'
+    default: false
+    description: "Flash persisted"
+  flashDurationMilliSeconds:
+    order: 23
     type: 'integer'
     default: 300
     description: "Duration for flash"
   flashColor:
-    order: 23
+    order: 24
     type: 'string'
     default: 'highlight'
     enum: ['info', 'success', 'warning', 'error', 'highlight', 'selected']

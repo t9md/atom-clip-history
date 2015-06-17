@@ -8,6 +8,7 @@ Paste from clipboard history like emacs' kill-ring
 
 * Paste old clipboard entry.
 * Visually highlight(flash) pasted range.
+* Also you can choose flash to be persisted until cursor move.
 * Multi cursor support.
 
 # How to use

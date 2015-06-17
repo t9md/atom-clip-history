@@ -1,5 +1,7 @@
-## 0.1.5 - [PRE RELEASE] Improve
+## 0.1.5 - Improve
 * Refactor
+* [FIX] Marker did not destroyed()
+* [feature] new `flashPersist` option.
 
 ## 0.1.4 - Improve
 * [FIX] `max` configuration is not respected.

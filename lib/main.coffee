@@ -75,8 +75,15 @@ module.exports =
     @lastPastedRanges[cursor.id]?.destroy()
     @lastPastedRanges[cursor.id] = marker
 
-    if settings.get('flashOnPaste')
-      @getFlasher().register editor, marker.copy()
+    return unless settings.get('flashOnPaste')
+
+    flashMarker =
+      if settings.get('flashPersist')
+        marker
+      else
+        marker.copy()
+
+    @getFlasher().register editor, flashMarker
 
   setTextForCursors: (text, rangeProider) ->
     editor = @getEditor()
@@ -88,17 +95,20 @@ module.exports =
     @unLock()
 
     @lastPastedText = text
-    if settings.get('flashOnPaste')
-      @getFlasher().flash
-        color:    settings.get('flashColor')
-        duration: settings.get('flashDurationMilliSeconds')
+    return unless settings.get('flashOnPaste')
+
+    @getFlasher().flash
+      color:    settings.get('flashColor')
+      duration: settings.get('flashDurationMilliSeconds')
+      persist:  settings.get('flashPersist')
 
   registerCleanUp: ->
     @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>
       return if @isLocked()
 
-      # console.log "onDidChange clear subscription!"
-      marker.destroy() for cursor, marker in @lastPastedRanges
+      for cursor, marker of @lastPastedRanges
+        marker.destroy()
+
       @lastPastedRanges = {}
       @history.resetIndex()
       @pasteSubscription.dispose()

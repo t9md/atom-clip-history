@@ -2,10 +2,12 @@ module.exports =
 class Flasher
   constructor: (@editor, @marker) ->
 
-  flash: ({color, duration}) ->
+  flash: ({color, duration, persist}) ->
     @decoration = @editor.decorateMarker @marker,
       type: 'highlight'
       class: "clip-history-#{color}"
+
+    return if persist
 
     setTimeout  =>
       @decoration.getMarker().destroy()
