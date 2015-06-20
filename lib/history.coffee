@@ -15,13 +15,13 @@ class History
   clear: ->
     @entries = []
 
-  add: (entry) ->
+  add: (text, metadata) ->
     # Don't store duplicate text
-    if entry.text in _.pluck(@entries, 'text')
+    if text in _.pluck(@entries, 'text')
       return
 
     @entries.shift() if @entries.length is @max
-    @entries.push entry
+    @entries.push {text, metadata}
     @index = @entries.length - 1
 
   get: (index) ->

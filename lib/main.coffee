@@ -22,13 +22,13 @@ module.exports =
     @lastPastedRanges = {}
 
     # texts = ['111', '222', '333']
-    # @history.add {text} for text in texts
+    # @history.add text for text in texts
 
     # Extending atom's native clipborad
-    @atomClipboardWrite = atom.clipboard.write.bind(atom.clipboard)
-    atom.clipboard.write = (text, metadata) =>
-      @history.add({text, metadata})
-      @atomClipboardWrite(text, metadata)
+    @atomClipboardWrite = atom.clipboard.write
+    atom.clipboard.write = (params...) =>
+      @history.add params...
+      @atomClipboardWrite.call atom.clipboard, params...
 
     @disposables.add atom.commands.add 'atom-workspace',
       'clip-history:paste':      => @paste()

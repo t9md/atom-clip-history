@@ -1,3 +1,7 @@
+## 0.1.6 - Improve
+* Add some tests
+* More constent approach to wrap atom.clipboard.write
+
 ## 0.1.5 - Improve
 * Refactor
 * [FIX] Marker did not destroyed()
