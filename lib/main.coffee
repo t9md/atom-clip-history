@@ -34,6 +34,7 @@ module.exports =
       'clip-history:paste':      => @paste()
       'clip-history:paste-last': => @paste(last: true)
       'clip-history:clear':      => @clear()
+      # 'clip-history:dump':      => @dump()
 
   lock: ->
     @locked = true
@@ -64,7 +65,30 @@ module.exports =
   getFlasher: ->
     @flasher ?= require './flasher'
 
+  # Currently support 'space' only, not 'TAB'.
+  adjustIndent: (s, indent) ->
+    lines = s.split("\n")
+    amountOfSpace = _.first(lines).search(/[^ ]/)
+
+    return s unless amountOfSpace > 0
+
+    regex = ///^#{' '.repeat amountOfSpace}///g
+
+    adjustable = _.all lines, (line) ->
+      return true if line is ''
+      line.match regex
+    return s unless adjustable
+
+    lines.map (line, i) ->
+      return line if line is ''
+      line = line.replace regex, ''
+      if i is 0 then line else indent + line
+    .join("\n")
+
   setText: (cursor, range, text) ->
+    indent = ' '.repeat(range.start.column)
+    text = @adjustIndent(text, indent) if settings.get('adjustIndent')
+
     editor = cursor.editor
     newRange = editor.setTextInBufferRange range, text
 

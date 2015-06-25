@@ -28,5 +28,10 @@ config =
     default: 'highlight'
     enum: ['info', 'success', 'warning', 'error', 'highlight', 'selected']
     description: 'Flash color. Correspoinding to @background-color-#{flashColor}: see `styleguide:show`'
+  adjustIndent:
+    order: 25
+    type: 'boolean'
+    default: true
+    description: "Adjust indentation when pasted."
 
 module.exports = new ConfigPlus('clip-history', config)

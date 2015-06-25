@@ -10,6 +10,7 @@ Paste from clipboard history like emacs' kill-ring
 * Visually highlight(flash) pasted range.
 * Also you can choose flash to be persisted until cursor move.
 * Multi cursor support.
+* Auto adjust indentation to fit current column when pasted(enabled by default).
 
 # How to use
 
@@ -22,7 +23,6 @@ Paste from clipboard history like emacs' kill-ring
 * `clip-history:paste`: Paste. Continuous execution without moving cursor pops older clipborad entry.
 * `clip-history:paste-last`: Paste last pasted text.
 * `clip-history:clear`: Clear clipboard history.
-
 
 # Keymap
 No keymap by default.
@@ -45,3 +45,4 @@ e.g.
 * [x] Make configurable flash duration.
 * [x] Multi cursor support
 * [x] Use marker instead of range to track original range in multi cursor situation.
+* [x] Adjust proceeding space to avoid breaking layout.

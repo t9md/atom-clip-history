@@ -122,3 +122,30 @@ describe "clip-history", ->
         for text in [data..., data...]
           workspaceCommander.execute 'clip-history:paste'
           expect(getWordUnderCursor()).toEqual text
+
+  describe 'adjustIndent', ->
+    beforeEach ->
+      activationPromise = atom.packages.activatePackage('clip-history')
+      waitsForPromise ->
+        activationPromise
+
+    it 'adjust indent', ->
+      indent = ' '.repeat(10)
+      s1  = "  two space indent\n"
+      s1 += "     level-2\n"
+      s1 += "\n"
+      s1 += "       level-3\n"
+
+      s2  = "two space indent\n"
+      s2 += "#{indent}   level-2\n"
+      s2 += "\n"
+      s2 += "#{indent}     level-3\n"
+      expect(getMain().adjustIndent(s1, indent)).toEqual s2
+
+    it "won't adjust if there is shallow indent than first line", ->
+      indent = ' '.repeat(10)
+      s1  = "  two space indent\n"
+      s1 += "\n"
+      s1 += " shallow\n"
+      s1 += "       level-3\n"
+      expect(getMain().adjustIndent(s1, indent)).toEqual s1

@@ -1,3 +1,6 @@
+## 0.1.7 - Improve
+* Introduce `adjustIndent` and its enabled by default.
+
 ## 0.1.6 - Improve
 * Add some tests
 * More constent approach to wrap atom.clipboard.write
