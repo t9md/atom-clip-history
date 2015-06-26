@@ -1,3 +1,6 @@
+## 0.1.8 - Improve
+* `adjustIndent` now aware hardTab indent.
+
 ## 0.1.7 - Improve
 * Introduce `adjustIndent` and its enabled by default.
 

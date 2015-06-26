@@ -7,10 +7,10 @@ Paste from clipboard history like emacs' kill-ring
 # Features
 
 * Paste old clipboard entry.
+* Keep layout of multi line text when pasted(enabled by default).
 * Visually highlight(flash) pasted range.
 * Also you can choose flash to be persisted until cursor move.
 * Multi cursor support.
-* Auto adjust indentation to fit current column when pasted(enabled by default).
 
 # How to use
 

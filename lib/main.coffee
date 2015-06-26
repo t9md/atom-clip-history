@@ -65,31 +65,53 @@ module.exports =
   getFlasher: ->
     @flasher ?= require './flasher'
 
-  # Currently support 'space' only, not 'TAB'.
-  adjustIndent: (s, indent) ->
-    lines = s.split("\n")
-    amountOfSpace = _.first(lines).search(/[^ ]/)
+  tab2space: (s, tabLength) ->
+    s.replace /^[\t ]+/, (s) ->
+      s.replace /\t/g, _.multiplyString(' ', tabLength)
 
-    return s unless amountOfSpace > 0
+  space2tab: (s, tabLength) ->
+    ms = _.multiplyString
+    s.replace /^ +/, (s) ->
+      tabs   = ms '\t', Math.floor(s.length / tabLength)
+      spaces = ms ' ', (s.length % tabLength)
+      tabs + spaces
 
-    regex = ///^#{' '.repeat amountOfSpace}///g
+  getIndent: (editor, point) ->
+    leadingText = editor.lineTextForBufferRow(point.row)[0...point.column]
+    softTab = _.multiplyString ' ', editor.getTabLength()
+    _.multiplyString ' ', leadingText.replace(/\t/g, softTab).length
+
+  adjustIndent: (s, editor, point) ->
+    tabLength = editor.getTabLength()
+    lines     = s.split("\n")
+    unless editor.getSoftTabs()
+      lines = lines.map (line) => @tab2space line, tabLength
+
+    spaces = _.first(lines).match(/^ +/)?[0] ? ''
+    regex = ///^#{spaces}///g
 
     adjustable = _.all lines, (line) ->
       return true if line is ''
       line.match regex
     return s unless adjustable
 
-    lines.map (line, i) ->
+    lines = lines.map (line, i) =>
       return line if line is ''
       line = line.replace regex, ''
-      if i is 0 then line else indent + line
-    .join("\n")
+      return line if i is 0
+
+      line = @getIndent(editor, point) + line
+      unless editor.getSoftTabs()
+        line = @space2tab line, tabLength
+      line
+
+    lines.join("\n")
 
   setText: (cursor, range, text) ->
-    indent = ' '.repeat(range.start.column)
-    text = @adjustIndent(text, indent) if settings.get('adjustIndent')
-
     editor = cursor.editor
+    if settings.get('adjustIndent')
+      text = @adjustIndent(text, editor, range.start)
+
     newRange = editor.setTextInBufferRange range, text
 
     marker = editor.markBufferRange newRange,

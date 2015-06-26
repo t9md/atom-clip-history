@@ -32,6 +32,6 @@ config =
     order: 25
     type: 'boolean'
     default: true
-    description: "Adjust indentation when pasted."
+    description: "Keep layout of pasted text by adjusting indentation."
 
 module.exports = new ConfigPlus('clip-history', config)
