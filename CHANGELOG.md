@@ -1,3 +1,6 @@
+## 0.1.9 - Improve
+* `syncToSystemClipboard()` to sync clipboard update happened on other window.
+
 ## 0.1.8 - Improve
 * `adjustIndent` now aware hardTab indent.
 
