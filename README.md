@@ -46,3 +46,5 @@ e.g.
 * [x] Multi cursor support
 * [x] Use marker instead of range to track original range in multi cursor situation.
 * [x] Adjust proceeding space to avoid breaking layout.
+* [x] Catch system's clipboard update on
+* [ ] Improve corner case handling of `adjustIndent()`

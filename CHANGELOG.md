@@ -1,3 +1,6 @@
+## 0.1.10 - Improve
+* Now `scrollToCursorPosition` when pasted to avoid cursor position off-screen.
+
 ## 0.1.9 - Improve
 * `syncToSystemClipboard()` to sync clipboard update happened on other window.
 

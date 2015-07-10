@@ -138,6 +138,7 @@ module.exports =
     editor.transact =>
       for cursor in editor.getCursors()
         @setText cursor, rangeProider(cursor), text
+    editor.scrollToCursorPosition {center: false}
     @unLock()
 
     @lastPastedText = text
