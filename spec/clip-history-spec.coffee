@@ -71,13 +71,13 @@ describe "clip-history", ->
         commander.execute 'clip-history:clear'
         expect(getEntries()).toHaveLength 0
 
-      it "delete older entries with FIFO manner", ->
+      it "delete older entries with LILO manner", ->
         atom.clipboard.write text for text in data
-        expect(getTextsOfEntries()).toEqual data
+        expect(getTextsOfEntries()).toEqual data.slice().reverse()
         expect(getEntries()).toHaveLength 3
 
         atom.clipboard.write 'four'
-        expect(getTextsOfEntries()).toEqual ["two", "three", "four"]
+        expect(getTextsOfEntries()).toEqual ["four", "three", "two"]
 
   describe "paste", ->
     [editorCommander, workspaceCommander, editor] = []
@@ -114,10 +114,9 @@ describe "clip-history", ->
           selectWordsUnderCursors()
           editorCommander.execute 'core:copy'
 
-        data = ['one', 'two', 'three']
+        data = ['three', 'two', 'one']
         expect(getTextsOfEntries()).toEqual data
 
-        data.reverse()
         moveTo [5, 0]
         for text in [data..., data...]
           workspaceCommander.execute 'clip-history:paste'

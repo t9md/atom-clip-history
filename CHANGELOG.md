@@ -1,3 +1,7 @@
+## 0.1.11 - FIX
+* [BUG] Latest copied entry didn't popped first when entry already in history.
+* Disable `syncToSystemClipboard()` since its not respect when its saved.
+
 ## 0.1.10 - Improve
 * Now `scrollToCursorPosition` when pasted to avoid cursor position off-screen.
 
