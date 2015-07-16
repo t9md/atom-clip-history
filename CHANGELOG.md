@@ -1,3 +1,6 @@
+## 0.1.12 - Re-introduce syncToSystemClipboard
+* Re-enable `syncToSystemClipboard()`.
+
 ## 0.1.11 - FIX
 * [BUG] Latest copied entry didn't popped first when entry already in history.
 * Disable `syncToSystemClipboard()` since its not respect when its saved.

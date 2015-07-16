@@ -167,16 +167,16 @@ module.exports =
       when 'lastPasted'
         (cursor) => @lastPastedRanges[cursor.id]?.getBufferRange()
 
-  # syncToSystemClipboard: ->
-  #   clipboadText = atom.clipboard.read()
-  #   if clipboadText isnt @history.peekNext()
-  #     @history.add clipboadText
+  syncSystemClipboard: ->
+    clipboadText = atom.clipboard.read()
+    if clipboadText isnt @history.peekLatest()?.text
+      @history.add clipboadText
 
   paste: (options={}) ->
     return unless editor = @getEditor()
 
     # system's clipboad might be updated in other place.
-    # @syncToSystemClipboard()
+    @syncSystemClipboard()
 
     rangeType = null
     if options.last?

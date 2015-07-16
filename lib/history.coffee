@@ -40,8 +40,8 @@ class History
   #     current = if @index is i then '> ' else '  '
   #     console.log "#{current}#{i} #{entry.text}"
 
-  peekNext: ->
-    @get @index
+  peekLatest: ->
+    @get 0
 
   getNext: ->
     entry = @get @index
