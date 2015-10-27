@@ -2,10 +2,12 @@
 _ = require 'underscore-plus'
 settings = require './settings'
 
+History = null
+
 module.exports =
   config: settings.config
 
-  disposables:        null
+  subscriptions:      null
   history:            null
   lastPastedRanges:   null
   lastPastedText:     null
@@ -14,7 +16,7 @@ module.exports =
   pasteSubscription:  null
 
   activate: (state) ->
-    @disposables = new CompositeDisposable
+    @subscriptions = new CompositeDisposable
 
     History = require './history'
     @history = new History(settings.get('max'))
@@ -27,10 +29,10 @@ module.exports =
     # Extending atom's native clipborad
     @atomClipboardWrite = atom.clipboard.write
     atom.clipboard.write = (params...) =>
-      @history.add params...
-      @atomClipboardWrite.call atom.clipboard, params...
+      @history.add(params...)
+      @atomClipboardWrite.call(atom.clipboard, params...)
 
-    @disposables.add atom.commands.add 'atom-workspace',
+    @subscriptions.add atom.commands.add 'atom-workspace',
       'clip-history:paste':      => @paste()
       'clip-history:paste-last': => @paste(last: true)
       'clip-history:clear':      => @clear()
@@ -56,7 +58,7 @@ module.exports =
     if @atomClipboardWrite?
       atom.clipboard.write = @atomClipboardWrite
     @pasteSubscription?.dispose()
-    @disposables.dispose()
+    @subscriptions.dispose()
 
   getEditor: ->
     atom.workspace.getActiveTextEditor()
@@ -161,6 +163,7 @@ module.exports =
       @pasteSubscription = null
 
   getRangeProvider: (rangeType) ->
+    # sometime's reange got undefined, so need investigation for cause.
     switch rangeType
       when 'current'
         (cursor) -> cursor.selection.getBufferRange()
