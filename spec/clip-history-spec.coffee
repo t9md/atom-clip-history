@@ -1,126 +1,103 @@
 _ = require 'underscore-plus'
 
+getMain = ->
+  atom.packages.getLoadedPackage('clip-history').mainModule
+
+getHistory = ->
+  getMain().history
+
+getCommander = (element) ->
+  execute: (command) ->
+    atom.commands.dispatch element, command
+
+getTextsOfEntries = ->
+  _.pluck(getEntries(), 'text')
+
 describe "clip-history", ->
-  getMain = ->
-    atom.packages.getLoadedPackage('clip-history').mainModule
-
-  getHistory = ->
-    getMain().history
-
+  [editor, editorElement, main, pathSample, workspaceElement, atomClipboardWrite] = []
   getEntries = ->
-    getHistory().entries
+    main.history.entries
 
-  getCommander = (element) ->
-    execute: (command) ->
-      atom.commands.dispatch element, command
-
-  getTextsOfEntries = ->
+  getTexts = ->
     _.pluck(getEntries(), 'text')
 
-  describe "activation", ->
-    beforeEach ->
-      waitsForPromise ->
-        atom.packages.activatePackage('clip-history')
+  dispatchCommand = (element, command) ->
+    atom.commands.dispatch element, command
 
+  beforeEach ->
+    atom.config.set('clip-history.max', 3)
+    # addCustomMatchers(this)
+    atomClipboardWrite = atom.clipboard.write
+
+    workspaceElement = atom.views.getView(atom.workspace)
+    waitsForPromise ->
+      atom.packages.activatePackage("clip-history").then (pack) ->
+        main = pack.mainModule
+
+    samplePath = atom.project.resolvePath("sample.txt")
+    waitsForPromise ->
+      atom.workspace.open(samplePath).then (e) ->
+        editor = e
+        editorElement = atom.views.getView(editor)
+
+  describe "initialState", ->
     describe "when activated", ->
       it "history entries is empty", ->
         expect(getEntries()).toHaveLength 0
 
-      it "wrap original atom.clipboard with new one", ->
-        expect(getMain().atomClipboardWrite).not.toEqual(atom.clipboard.write)
+      it "replace original atom.clipboard.write", ->
+        expect(atomClipboardWrite).not.toBe(atom.clipboard.write)
 
     describe "when deactivated", ->
-      it "restore original atom.clipboard", ->
+      it "restore original atom.clipboard.write", ->
         atom.packages.deactivatePackage 'clip-history'
-        expect(getMain().atomClipboardWrite).toEqual(atom.clipboard.write)
+        expect(atom.clipboard.write).toBe(atomClipboardWrite)
 
-  describe "history", ->
-    [history, commander, main, workspaceElement, editor, editorElement] = []
+  describe "when new entry added", ->
+    it "add new entry", ->
+      atom.clipboard.write('one')
+      expect(getTexts()).toEqual ['one']
+      atom.clipboard.write('two')
+      expect(getTexts()).toEqual ['two', 'one']
 
+  describe "when entries exceed max", ->
+    data = [ "one", "two", "three" ]
     beforeEach ->
-      atom.config.set('clip-history.max', 3)
-      waitsForPromise ->
-        atom.packages.activatePackage 'clip-history'
+      atom.clipboard.write(text) for text in data
+      expect(getTexts()).toEqual ['three', 'two', 'one']
 
-    afterEach ->
-      atom.packages.deactivatePackage 'clip-history'
+    it "remove old entry with FIFO manner", ->
+      atom.clipboard.write 'four'
+      expect(getTexts()).toEqual ['four', 'three', 'two']
 
-    describe "when new entry added", ->
-      it "add new entry", ->
-        atom.clipboard.write('one')
-        expect(getHistory().entries).toHaveLength 1
-
-        atom.clipboard.write('two')
-        expect(getHistory().entries).toHaveLength 2
-
-    describe "when entries exceed max", ->
+  describe "clip-history:clear", ->
+    beforeEach ->
       data = [ "one", "two", "three" ]
-      beforeEach ->
-        workspaceElement = atom.views.getView(atom.workspace)
-        commander = getCommander workspaceElement
+      atom.clipboard.write(text) for text in data
+      expect(getTexts()).toEqual ['three', 'two', 'one']
 
-      it "only keep number of entries specified with max", ->
-        atom.clipboard.write text for text in data
-        expect(getEntries()).toHaveLength 3
-        atom.clipboard.write 'four'
-        expect(getEntries()).toHaveLength 3
+    it "clear entries", ->
+      dispatchCommand(editorElement, 'clip-history:clear')
+      expect(getTexts()).toEqual []
 
-      it "clear entries", ->
-        atom.clipboard.write text for text in data
-        expect(getEntries()).toHaveLength 3
-        commander.execute 'clip-history:clear'
-        expect(getEntries()).toHaveLength 0
-
-      it "delete older entries with LILO manner", ->
-        atom.clipboard.write text for text in data
-        expect(getTextsOfEntries()).toEqual data.slice().reverse()
-        expect(getEntries()).toHaveLength 3
-
-        atom.clipboard.write 'four'
-        expect(getTextsOfEntries()).toEqual ["four", "three", "two"]
-
-  describe "paste", ->
-    [editorCommander, workspaceCommander, editor] = []
-
-    beforeEach ->
-      atom.config.set('clip-history.max', 3)
-      activationPromise = atom.packages.activatePackage('clip-history')
-      samplePath        = atom.project.getDirectories()[0].resolve("sample.txt")
-
-      waitsForPromise ->
-        activationPromise
-        atom.workspace.open(samplePath).then (_editor) ->
-          editor          = _editor
-          editorCommander = getCommander atom.views.getView(_editor)
-      workspaceCommander = getCommander atom.views.getView(atom.workspace)
-
-    moveTo = (point) ->
+  describe "clip-history:paste", ->
+    setPosition = (point) ->
       editor.setCursorBufferPosition point
 
-    selectWordsUnderCursors = ->
-      editor.selectWordsContainingCursors()
-
-    getWordUnderCursor = ->
-      editor.getWordUnderCursor()
-
-    afterEach ->
-      atom.packages.deactivatePackage 'clip-history'
-
     describe 'paste', ->
-      it 'paste older entries each time it executed', ->
-        points = [[0, 0], [1, 0], [2, 0]]
-        for point in points
-          moveTo point
-          selectWordsUnderCursors()
-          editorCommander.execute 'core:copy'
+      it 'paste older entry on each execution', ->
+        for point in [[0, 0], [1, 0], [2, 0]]
+          setPosition(point)
+          editor.selectWordsContainingCursors()
+          dispatchCommand(editorElement, 'core:copy')
 
         data = ['three', 'two', 'one']
-        expect(getTextsOfEntries()).toEqual data
+        expect(getTexts()).toEqual data
 
-        moveTo [5, 0]
+        setPosition [5, 0]
         for text in [data..., data...]
-          workspaceCommander.execute 'clip-history:paste'
-          expect(getWordUnderCursor()).toEqual text
+          dispatchCommand(editorElement, 'clip-history:paste')
+          expect(editor.getWordUnderCursor()).toEqual text
 
   # describe 'adjustIndent', ->
   #   beforeEach ->

@@ -1,50 +1,31 @@
 _ = require 'underscore-plus'
+settings = require './settings'
 
 module.exports =
 class History
-  entries: []
-  index: 0
-
-  constructor: (@max) ->
-    @index   = 0
+  constructor: ->
+    @index   = -1
     @entries = []
 
-  resetIndex: ->
-    @index = 0
+  reset: ->
+    @index = -1
 
   clear: ->
     @entries = []
 
-  uniq: (entries) ->
-    seen = []
-    entries.filter (e) ->
-      if e.text in seen
-        false
-      else
-        seen.push e.text
-        true
-
   add: (text, metadata) ->
     return if _.isEmpty(text)
     @entries.unshift {text, metadata}
-    @entries = @uniq @entries
-    @entries.pop() if @entries.length > @max
-    @index = 0
+    @entries = _.uniq(@entries, (e) -> e.text)
 
-  get: (index) ->
-    @entries[index]
-
-  # dump: ->
-  #   console.log "index = #{@index}, length = #{@entries.length}"
-  #   for entry, i in @entries
-  #     current = if @index is i then '> ' else '  '
-  #     console.log "#{current}#{i} #{entry.text}"
-
-  peekLatest: ->
-    @get 0
+    maxEntries = settings.get('max')
+    if @entries.length > maxEntries
+      @entries.splice maxEntries
+    @reset()
 
   getNext: ->
-    entry = @get @index
-    if entry
-      @index = (@index + 1) % @entries.length
-    entry
+    @index = (@index + 1) % @entries.length
+    @entries[@index]
+
+  getLatest: ->
+    @entries[0]

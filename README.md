@@ -1,4 +1,4 @@
-# clip-history
+# clip-history [![Build Status](https://travis-ci.org/t9md/atom-clip-history.svg)](https://travis-ci.org/t9md/atom-clip-history)
 
 Paste from clipboard history like emacs' kill-ring
 

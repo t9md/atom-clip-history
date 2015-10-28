@@ -1,6 +1,6 @@
 ConfigPlus = require 'atom-config-plus'
 
-config =
+module.exports = new ConfigPlus 'clip-history',
   max:
     order: 11
     type: 'integer'
@@ -25,13 +25,11 @@ config =
   flashColor:
     order: 24
     type: 'string'
-    default: 'highlight'
+    default: 'selected'
     enum: ['info', 'success', 'warning', 'error', 'highlight', 'selected']
-    description: 'Flash color. Correspoinding to @background-color-#{flashColor}: see `styleguide:show`'
+    description: 'Flash color. Correspoinding to @background-color-#\{flashColor}: see `styleguide:show`'
   adjustIndent:
     order: 25
     type: 'boolean'
     default: true
     description: "Keep layout of pasted text by adjusting indentation."
-
-module.exports = new ConfigPlus('clip-history', config)

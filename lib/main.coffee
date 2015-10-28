@@ -1,199 +1,101 @@
 {CompositeDisposable} = require 'atom'
 _ = require 'underscore-plus'
+
+{getEditor, adjustIndent, flash} = require './utils'
 settings = require './settings'
 
-History = null
+History = require './history'
 
 module.exports =
   config: settings.config
-
   subscriptions:      null
   history:            null
-  lastPastedRanges:   null
   lastPastedText:     null
-  atomClipboardWrite: null
-  flasher:            null
-  pasteSubscription:  null
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
-
-    History = require './history'
     @history = new History(settings.get('max'))
+    @markerByCursor = new Map
+    @restoreNativeClipBoardWrite = @extendNativeClipBoardWrite()
+    @subscriptions.add atom.commands.add 'atom-text-editor',
+      'clip-history:paste': => @paste()
+      'clip-history:paste-last': => @paste({pasteLastPasted: true})
+      'clip-history:clear': => @clear()
 
-    @lastPastedRanges = {}
-
-    # texts = ['111', '222', '333']
-    # @history.add text for text in texts
-
-    # Extending atom's native clipborad
-    @atomClipboardWrite = atom.clipboard.write
+  extendNativeClipBoardWrite: ->
+    atomClipboardWrite = atom.clipboard.write
     atom.clipboard.write = (params...) =>
       @history.add(params...)
-      @atomClipboardWrite.call(atom.clipboard, params...)
-
-    @subscriptions.add atom.commands.add 'atom-workspace',
-      'clip-history:paste':      => @paste()
-      'clip-history:paste-last': => @paste(last: true)
-      'clip-history:clear':      => @clear()
-
-  lock: ->
-    @locked = true
-
-  unLock: ->
-    @locked = false
-
-  isLocked: ->
-    @locked
-
-  dump: ->
-    console.log @lastPastedRanges[@getEditor().getLastCursor().id]
-    @history.dump()
-
-  clear: ->
-    @history.clear()
+      atomClipboardWrite.call(atom.clipboard, params...)
+    ->
+      atom.clipboard.write = atomClipboardWrite
 
   deactivate: ->
-    @lastPastedText = null
-    if @atomClipboardWrite?
-      atom.clipboard.write = @atomClipboardWrite
-    @pasteSubscription?.dispose()
+    @restoreNativeClipBoardWrite?()
     @subscriptions.dispose()
+    {@lastPastedText, @subscriptions, @restoreNativeClipBoardWrite} = {}
 
-  getEditor: ->
-    atom.workspace.getActiveTextEditor()
+  withLock: (fn) ->
+    @locked = true
+    fn()
+    @locked = false
 
-  getFlasher: ->
-    @flasher ?= require './flasher'
+  isLocked: -> @locked
+  clear: -> @history.clear()
 
-  tab2space: (s, tabLength) ->
-    s.replace /^[\t ]+/, (s) ->
-      s.replace /\t/g, _.multiplyString(' ', tabLength)
+  paste: ({pasteLastPasted}={}) ->
+    text = if pasteLastPasted? then @lastPastedText else @history.getNext()?.text
+    return unless text
 
-  space2tab: (s, tabLength) ->
-    ms = _.multiplyString
-    s.replace /^ +/, (s) ->
-      tabs   = ms '\t', Math.floor(s.length / tabLength)
-      spaces = ms ' ', (s.length % tabLength)
-      tabs + spaces
+    if (initialPaste = @markerByCursor.size is 0)
+      # system's clipboad might be updated in other place.
+      @syncSystemClipboard()
+      @registerCleanUp()
 
-  getIndent: (editor, point) ->
-    leadingText = editor.lineTextForBufferRow(point.row)[0...point.column]
-    softTab = _.multiplyString ' ', editor.getTabLength()
-    _.multiplyString ' ', leadingText.replace(/\t/g, softTab).length
+    getRange = (cursor) =>
+      if pasteLastPasted? or initialPaste
+        cursor.selection.getBufferRange()
+      else
+        @markerByCursor.get(cursor)?.getBufferRange()
 
-  adjustIndent: (s, editor, point) ->
-    tabLength = editor.getTabLength()
-    lines     = s.split("\n")
-    unless editor.getSoftTabs()
-      lines = lines.map (line) => @tab2space line, tabLength
-
-    spaces = _.first(lines).match(/^ +/)?[0] ? ''
-    regex = ///^#{spaces}///g
-
-    adjustable = _.all lines, (line) ->
-      return true if line is ''
-      line.match regex
-    return s unless adjustable
-
-    lines = lines.map (line, i) =>
-      return line if line is ''
-      line = line.replace regex, ''
-      return line if i is 0
-
-      line = @getIndent(editor, point) + line
-      unless editor.getSoftTabs()
-        line = @space2tab line, tabLength
-      line
-
-    lines.join("\n")
+    editor = getEditor()
+    @withLock =>
+      editor.transact =>
+        @setText(c, getRange(c), text) for c in editor.getCursors()
+      editor.scrollToCursorPosition {center: false}
+    @lastPastedText = text
 
   setText: (cursor, range, text) ->
     editor = cursor.editor
     if settings.get('adjustIndent')
-      text = @adjustIndent(text, editor, range.start)
+      text = adjustIndent(text, editor, range.start)
 
-    newRange = editor.setTextInBufferRange range, text
-
+    newRange = editor.setTextInBufferRange(range, text)
     marker = editor.markBufferRange newRange,
       invalidate: 'never'
       persistent: false
 
-    @lastPastedRanges[cursor.id]?.destroy()
-    @lastPastedRanges[cursor.id] = marker
+    @markerByCursor.get(cursor)?.destroy()
+    @markerByCursor.set(cursor, marker)
 
-    return unless settings.get('flashOnPaste')
-
-    flashMarker =
-      if settings.get('flashPersist')
-        marker
-      else
-        marker.copy()
-
-    @getFlasher().register editor, flashMarker
-
-  setTextForCursors: (text, rangeProider) ->
-    editor = @getEditor()
-
-    @lock()
-    editor.transact =>
-      for cursor in editor.getCursors()
-        @setText cursor, rangeProider(cursor), text
-    editor.scrollToCursorPosition {center: false}
-    @unLock()
-
-    @lastPastedText = text
-    return unless settings.get('flashOnPaste')
-
-    @getFlasher().flash
-      color:    settings.get('flashColor')
-      duration: settings.get('flashDurationMilliSeconds')
-      persist:  settings.get('flashPersist')
+    if settings.get('flashOnPaste')
+      flashMarker = if settings.get('flashPersist') then marker else marker.copy()
+      flash editor, flashMarker,
+        class: "clip-history-#{settings.get('flashColor')}"
+        duration: settings.get('flashDurationMilliSeconds')
+        persist: settings.get('flashPersist')
 
   registerCleanUp: ->
-    @pasteSubscription = @getEditor().onDidChangeCursorPosition (event) =>
+    @subscriptions.add sub = getEditor().onDidChangeCursorPosition =>
       return if @isLocked()
-
-      for cursor, marker of @lastPastedRanges
+      @markerByCursor.forEach (marker) ->
         marker.destroy()
-
-      @lastPastedRanges = {}
-      @history.resetIndex()
-      @pasteSubscription.dispose()
-      @pasteSubscription = null
-
-  getRangeProvider: (rangeType) ->
-    # sometime's reange got undefined, so need investigation for cause.
-    switch rangeType
-      when 'current'
-        (cursor) -> cursor.selection.getBufferRange()
-      when 'lastPasted'
-        (cursor) => @lastPastedRanges[cursor.id]?.getBufferRange()
+      @markerByCursor.clear()
+      @history.reset()
+      sub.dispose()
+      @subscriptions.remove(sub)
 
   syncSystemClipboard: ->
     clipboadText = atom.clipboard.read()
-    if clipboadText isnt @history.peekLatest()?.text
+    if clipboadText isnt @history.getLatest()?.text
       @history.add clipboadText
-
-  paste: (options={}) ->
-    return unless editor = @getEditor()
-
-    # system's clipboad might be updated in other place.
-    @syncSystemClipboard()
-
-    rangeType = null
-    if options.last?
-      text = @lastPastedText
-      rangeType = 'current'
-    else
-      text = @history.getNext()?.text
-    return unless text
-
-    if not @pasteSubscription?
-      # First time
-      rangeType ?= 'current'
-      @registerCleanUp()
-    else
-      rangeType ?= 'lastPasted'
-
-    @setTextForCursors text, @getRangeProvider(rangeType)
