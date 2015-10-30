@@ -4,8 +4,6 @@
 * Spec: More coverage.
 * Refactoring.
 * Deprecate: flashColor config parameter.
-
-## 0.1.12 - Re-introduce syncToSystemClipboard [was not released]
 * Re-enable `syncToSystemClipboard()`.
 
 ## 0.1.11 - FIX
