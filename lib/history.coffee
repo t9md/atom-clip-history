@@ -4,17 +4,17 @@ settings = require './settings'
 module.exports =
 class History
   constructor: ->
-    @index   = -1
+    @init()
+
+  init: ->
     @entries = []
+    @resetIndex()
 
   resetIndex: ->
     @index = -1
 
-  clear: ->
-    @entries = []
-
   add: (text, metadata) => # fat
-    return if _.isEmpty(text)
+    return if _.isEmpty(text) or (text is @get(0)?.text)
     @entries.unshift {text, metadata}
     @entries = _.uniq(@entries, (e) -> e.text)
 
@@ -23,9 +23,8 @@ class History
       @entries.splice maxEntries
     @resetIndex()
 
-  getNext: ->
-    @index = (@index + 1) % @entries.length
-    @entries[@index]
+  get: (index) ->
+    @entries[index]
 
-  getLatest: ->
-    @entries[0]
+  getNext: ->
+    @get(@index = (@index + 1) % @entries.length)

@@ -1,7 +1,7 @@
 {CompositeDisposable} = require 'atom'
 _ = require 'underscore-plus'
 
-{getEditor, adjustIndent, flash, spyClipBoardWrite} = require './utils'
+{adjustIndent, flash, spyClipBoardWrite} = require './utils'
 settings = require './settings'
 History = require './history'
 
@@ -9,7 +9,7 @@ module.exports =
   config: settings.config
 
   activate: (state) ->
-    @history = new History(settings.get('max'))
+    @history = new History
     @markerByCursor = new Map
     @restoreClipBoardWrite = spyClipBoardWrite(@history.add)
 
@@ -17,17 +17,19 @@ module.exports =
     subs.add atom.commands.add 'atom-text-editor',
       'clip-history:paste': => @paste()
       'clip-history:paste-last': => @paste({pasteLastPasted: true})
-      'clip-history:clear': => @clear()
+      'clip-history:clear': => @history.init()
 
-    # To clear pasteState on pane item changed
+    # Reset pasteState when pane item changed
     subs.add atom.workspace.onDidChangeActivePaneItem (item) =>
       @resetPasteState()
+    @observeCursorPositionChange()
 
-    # To clear pasteState on cursor position changed
+  # Reset pasteState when cursor position changed
+  observeCursorPositionChange: ->
+    subs = @subscriptions
     subs.add atom.workspace.observeTextEditors (editor) =>
       return if editor.isMini()
       editorSubs = new CompositeDisposable
-      # CursorMoved
       editorSubs.add editor.onDidChangeCursorPosition =>
         @resetPasteState() unless @isPasting()
 
@@ -59,27 +61,20 @@ module.exports =
   isPasting: ->
     @pasting
 
-  clear: ->
-    @history.clear()
-
-  syncSystemClipboard: ->
-    clipboadText = atom.clipboard.read()
-    if clipboadText isnt @history.getLatest()?.text
-      @history.add clipboadText
-
   paste: ({pasteLastPasted}={}) ->
     if @markerByCursor.size is 0 # means first paste
-      # system's clipboad might be updated in other place.
-      @syncSystemClipboard()
+      # system's clipboad can be updated in other place.
+      @history.add atom.clipboard.read()
 
-    if pasteLastPasted?
-      text = @lastPastedText
-      @resetPasteState()
-    else
-      text = @history.getNext()?.text
+    text =
+      if pasteLastPasted?
+        @resetPasteState()
+        @lastPastedText
+      else
+        @history.getNext()?.text
     return unless text
 
-    editor = getEditor()
+    editor = atom.workspace.getActiveTextEditor()
     @startPaste =>
       editor.transact =>
         @setText(c, text) for c in editor.getCursors()
@@ -93,10 +88,10 @@ module.exports =
       cursor.selection.getBufferRange()
 
   setText: (cursor, text) ->
-    range = @getPasteRangeForCursor(cursor)
     editor = cursor.editor
+    range = @getPasteRangeForCursor(cursor)
     if settings.get('adjustIndent')
-      text = adjustIndent(text, editor, range.start)
+      text = adjustIndent(editor, text, range.start)
 
     newRange = editor.setTextInBufferRange(range, text)
     marker = editor.markBufferRange newRange,
@@ -107,8 +102,7 @@ module.exports =
     @markerByCursor.set(cursor, marker)
 
     if settings.get('flashOnPaste')
-      flashMarker = if settings.get('flashPersist') then marker else marker.copy()
-      flash editor, flashMarker,
+      flash editor, marker,
         class: 'clip-history-pasted'
         duration: settings.get('flashDurationMilliSeconds')
         persist: settings.get('flashPersist')
