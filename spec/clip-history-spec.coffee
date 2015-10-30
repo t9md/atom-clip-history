@@ -1,20 +1,8 @@
 _ = require 'underscore-plus'
 
-getMain = ->
-  atom.packages.getLoadedPackage('clip-history').mainModule
-
-getHistory = ->
-  getMain().history
-
-getCommander = (element) ->
-  execute: (command) ->
-    atom.commands.dispatch element, command
-
-getTextsOfEntries = ->
-  _.pluck(getEntries(), 'text')
-
 describe "clip-history", ->
-  [editor, editorElement, main, pathSample, workspaceElement, atomClipboardWrite] = []
+  [editor, editorElement, main, workspaceElement, atomClipboardWrite] = []
+  [pathSample1, pathSample2] = []
   getEntries = ->
     main.history.entries
 
@@ -28,15 +16,15 @@ describe "clip-history", ->
     atom.config.set('clip-history.max', 3)
     # addCustomMatchers(this)
     atomClipboardWrite = atom.clipboard.write
-
     workspaceElement = atom.views.getView(atom.workspace)
     waitsForPromise ->
       atom.packages.activatePackage("clip-history").then (pack) ->
         main = pack.mainModule
 
-    samplePath = atom.project.resolvePath("sample.txt")
+    pathSample1 = atom.project.resolvePath("sample-1.txt")
+    pathSample2 = atom.project.resolvePath("sample-2.txt")
     waitsForPromise ->
-      atom.workspace.open(samplePath).then (e) ->
+      atom.workspace.open(pathSample1).then (e) ->
         editor = e
         editorElement = atom.views.getView(editor)
 
@@ -66,7 +54,7 @@ describe "clip-history", ->
       atom.clipboard.write(text) for text in data
       expect(getTexts()).toEqual ['three', 'two', 'one']
 
-    it "remove old entry with FIFO manner", ->
+    it "keep latest entry, remove old entry with FIFO manner", ->
       atom.clipboard.write 'four'
       expect(getTexts()).toEqual ['four', 'three', 'two']
 
@@ -98,30 +86,3 @@ describe "clip-history", ->
         for text in [data..., data...]
           dispatchCommand(editorElement, 'clip-history:paste')
           expect(editor.getWordUnderCursor()).toEqual text
-
-  # describe 'adjustIndent', ->
-  #   beforeEach ->
-  #     activationPromise = atom.packages.activatePackage('clip-history')
-  #     waitsForPromise ->
-  #       activationPromise
-  #
-  #   it 'adjust indent', ->
-  #     indent = ' '.repeat(10)
-  #     s1  = "  two space indent\n"
-  #     s1 += "     level-2\n"
-  #     s1 += "\n"
-  #     s1 += "       level-3\n"
-  #
-  #     s2  = "two space indent\n"
-  #     s2 += "#{indent}   level-2\n"
-  #     s2 += "\n"
-  #     s2 += "#{indent}     level-3\n"
-  #     expect(getMain().adjustIndent(s1, indent)).toEqual s2
-  #
-  #   it "won't adjust if there is shallow indent than first line", ->
-  #     indent = ' '.repeat(10)
-  #     s1  = "  two space indent\n"
-  #     s1 += "\n"
-  #     s1 += " shallow\n"
-  #     s1 += "       level-3\n"
-  #     expect(getMain().adjustIndent(s1, indent)).toEqual s1

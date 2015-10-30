@@ -22,12 +22,6 @@ module.exports = new ConfigPlus 'clip-history',
     type: 'integer'
     default: 300
     description: "Duration for flash"
-  flashColor:
-    order: 24
-    type: 'string'
-    default: 'selected'
-    enum: ['info', 'success', 'warning', 'error', 'highlight', 'selected']
-    description: 'Flash color. Correspoinding to @background-color-#\{flashColor}: see `styleguide:show`'
   adjustIndent:
     order: 25
     type: 'boolean'

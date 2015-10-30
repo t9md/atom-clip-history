@@ -7,13 +7,13 @@ class History
     @index   = -1
     @entries = []
 
-  reset: ->
+  resetIndex: ->
     @index = -1
 
   clear: ->
     @entries = []
 
-  add: (text, metadata) ->
+  add: (text, metadata) => # fat
     return if _.isEmpty(text)
     @entries.unshift {text, metadata}
     @entries = _.uniq(@entries, (e) -> e.text)
@@ -21,7 +21,7 @@ class History
     maxEntries = settings.get('max')
     if @entries.length > maxEntries
       @entries.splice maxEntries
-    @reset()
+    @resetIndex()
 
   getNext: ->
     @index = (@index + 1) % @entries.length

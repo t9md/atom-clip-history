@@ -55,6 +55,14 @@ flash = (editor, marker, options) ->
       marker.destroy()
     , duration
 
+spyClipBoardWrite = (fn) ->
+  atomClipboardWrite = atom.clipboard.write
+  atom.clipboard.write = (params...) ->
+    fn(params...)
+    atomClipboardWrite.call(atom.clipboard, params...)
+  ->
+    atom.clipboard.write = atomClipboardWrite
+
 module.exports = {
-  getEditor, tab2space, space2tab, getIndent, adjustIndent, flash
+  getEditor, tab2space, space2tab, getIndent, adjustIndent, flash, spyClipBoardWrite
 }
