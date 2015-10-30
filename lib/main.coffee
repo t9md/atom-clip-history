@@ -90,11 +90,15 @@ module.exports =
   setText: (cursor, text) ->
     editor = cursor.editor
     range = @getPasteRangeForCursor(cursor)
-    if settings.get('adjustIndent')
-      text = adjustIndent(editor, text, range.start)
 
-    newRange = editor.setTextInBufferRange(range, text)
-    marker = editor.markBufferRange newRange,
+    if settings.get('adjustIndent')
+      text = adjustIndent text,
+        indent: _.multiplyString(' ', range.start.column) ? ''
+        softTabs: editor.getSoftTabs()
+        tabLength: editor.getTabLength()
+
+    range = editor.setTextInBufferRange(range, text)
+    marker = editor.markBufferRange range,
       invalidate: 'never'
       persistent: false
 
