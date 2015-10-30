@@ -10,19 +10,21 @@ Paste from clipboard history like emacs' kill-ring
 * Keep layout of multi line text when pasted(enabled by default).
 * Visually highlight(flash) pasted range.
 * Also you can choose flash to be persisted until cursor move.
-* Multi cursor support.
+* Support multiple cursor.
+
+# Commands
+
+* `clip-history:paste`: Paste. Continuous execution without moving cursor pops older entry.
+* `clip-history:paste-newer`: Paste. Continuous execution without moving cursor pops newer entry.
+* `clip-history:paste-last`: Paste last pasted text.
+* `clip-history:clear`: Clear clipboard history.
 
 # How to use
 
 1. Paste clipboard entry by `clip-history:paste`
 2. Continue `clip-history:paste` until you get entry you want.
-3. (optional) you can paste last pasted text with `clip-history:paste-last`.
-
-# Commands
-
-* `clip-history:paste`: Paste. Continuous execution without moving cursor pops older clipborad entry.
-* `clip-history:paste-last`: Paste last pasted text.
-* `clip-history:clear`: Clear clipboard history.
+3. (optional) when you get passed the text you wanted to paste, use `clip-history:paste-newer`.
+4. (optional) you can paste last pasted text with `clip-history:paste-last`.
 
 # Keymap
 No keymap by default.
@@ -32,6 +34,7 @@ e.g.
 ```coffeescript
 'atom-text-editor:not([mini])':
   'ctrl-y': 'clip-history:paste'
+  'cmd-y': 'clip-history:paste-newer'
   'ctrl-Y': 'clip-history:paste-last'
 ```
 
@@ -45,6 +48,5 @@ e.g.
 * [x] Make configurable flash duration.
 * [x] Multi cursor support
 * [x] Use marker instead of range to track original range in multi cursor situation.
-* [x] Adjust proceeding space to avoid breaking layout.
-* [ ] Catch system's clipboard update on
-* [ ] Improve corner case handling of `adjustIndent()`
+* [x] Adjust proceeding space to keep layout.
+* [x] Sync system's clipboard update.

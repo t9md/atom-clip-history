@@ -39,7 +39,7 @@ adjustIndent = (text, {indent, softTabs, tabLength}) ->
 
 flash = (editor, marker, options) ->
   {color, duration, persist, class: klass} = options
-  marker = marker.copy() unless persist?
+  marker = marker.copy() unless persist
   editor.decorateMarker marker,
     type: 'highlight'
     class: klass

@@ -15,8 +15,9 @@ module.exports =
 
     @subscriptions = subs = new CompositeDisposable
     subs.add atom.commands.add 'atom-text-editor',
-      'clip-history:paste': => @paste()
-      'clip-history:paste-last': => @paste({pasteLastPasted: true})
+      'clip-history:paste': => @paste('older')
+      'clip-history:paste-newer': => @paste('newer')
+      'clip-history:paste-last': => @paste('lastPasted')
       'clip-history:clear': => @history.init()
 
     # Reset pasteState when pane item changed
@@ -31,7 +32,8 @@ module.exports =
       return if editor.isMini()
       editorSubs = new CompositeDisposable
       editorSubs.add editor.onDidChangeCursorPosition =>
-        @resetPasteState() unless @isPasting()
+        if not @isPasting() and (@markerByCursor.size > 0)
+          @resetPasteState()
 
       editorSubs.add editor.onDidDestroy ->
         editorSubs.dispose()
@@ -61,17 +63,16 @@ module.exports =
   isPasting: ->
     @pasting
 
-  paste: ({pasteLastPasted}={}) ->
+  paste: (which) ->
     if @markerByCursor.size is 0 # means first paste
       # system's clipboad can be updated in other place.
       @history.add atom.clipboard.read()
 
-    text =
-      if pasteLastPasted?
-        @resetPasteState()
-        @lastPastedText
-      else
-        @history.getNext()?.text
+    if which is 'lastPasted'
+      @resetPasteState()
+      text = @lastPastedText
+    else
+      text = @history.get(which).text
     return unless text
 
     editor = atom.workspace.getActiveTextEditor()
@@ -90,7 +91,6 @@ module.exports =
   setText: (cursor, text) ->
     editor = cursor.editor
     range = @getPasteRangeForCursor(cursor)
-
     if settings.get('adjustIndent')
       text = adjustIndent text,
         indent: _.multiplyString(' ', range.start.column) ? ''
