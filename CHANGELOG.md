@@ -1,4 +1,4 @@
-## 0.1.13 - Improve
+## 0.1.12 - Improve
 * [BUG]: Now clear paste state on active item change.
 * [BUG]: Cause exception when cursor added in-middle-of sequential-paste.
 * Spec: More coverage.
