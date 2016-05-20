@@ -1,6 +1,22 @@
-ConfigPlus = require 'atom-config-plus'
+class Settings
+  constructor: (@scope, @config) ->
 
-module.exports = new ConfigPlus 'clip-history',
+  get: (param) ->
+    if param is 'defaultRegister'
+      if @get('useClipboardAsDefaultRegister') then '*' else '"'
+    else
+      atom.config.get "#{@scope}.#{param}"
+
+  set: (param, value) ->
+    atom.config.set "#{@scope}.#{param}", value
+
+  toggle: (param) ->
+    @set(param, not @get(param))
+
+  observe: (param, fn) ->
+    atom.config.observe "#{@scope}.#{param}", fn
+
+module.exports = new Settings 'clip-history',
   max:
     order: 11
     type: 'integer'
