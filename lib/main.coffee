@@ -13,6 +13,7 @@ module.exports =
     @markerByCursor = new Map
     @restoreClipBoardWrite = spyClipBoardWrite(@history.add)
 
+    settings.notifyOldParamsAndDelete()
     @subscriptions = subs = new CompositeDisposable
     subs.add atom.commands.add 'atom-text-editor',
       'clip-history:paste': => @paste('older')
@@ -64,6 +65,11 @@ module.exports =
     @pasting
 
   paste: (which) ->
+    editor = atom.workspace.getActiveTextEditor()
+    if editor.hasMultipleCursors() and settings.get('doNormalPasteWhenMultipleCursors')
+      editor.pasteText()
+      return
+
     if @markerByCursor.size is 0 # means first paste
       # system's clipboad can be updated in other place.
       @history.add atom.clipboard.read()
@@ -75,7 +81,6 @@ module.exports =
       text = @history.get(which).text
     return unless text
 
-    editor = atom.workspace.getActiveTextEditor()
     @startPaste =>
       editor.transact =>
         @setText(c, text) for c in editor.getCursors()

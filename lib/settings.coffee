@@ -1,20 +1,33 @@
+_ = require 'underscore-plus'
 class Settings
   constructor: (@scope, @config) ->
 
+  notifyOldParamsAndDelete: ->
+    paramsSupported = _.keys(@config)
+    paramsCurrent = _.keys(atom.config.get(@scope))
+    paramsToDelete = _.difference(paramsCurrent, paramsSupported)
+    return if paramsToDelete.length is 0
+    @delete(param) for param in paramsToDelete
+
+    deletedParamsText = ("- #{param}" for param in paramsToDelete).join("\n")
+    message = """
+      #{@scope}: Following configs are no longer supported.__
+      Automatically removed from your `connfig.cson`__
+      #{deletedParamsText}
+    """.replace(/_/g, " ")
+    atom.notifications.addWarning(message, dismissable: true)
+
+  has: (param) ->
+    param of atom.config.get(@scope)
+
+  delete: (param) ->
+    @set(param, undefined)
+
   get: (param) ->
-    if param is 'defaultRegister'
-      if @get('useClipboardAsDefaultRegister') then '*' else '"'
-    else
-      atom.config.get "#{@scope}.#{param}"
+    atom.config.get "#{@scope}.#{param}"
 
   set: (param, value) ->
     atom.config.set "#{@scope}.#{param}", value
-
-  toggle: (param) ->
-    @set(param, not @get(param))
-
-  observe: (param, fn) ->
-    atom.config.observe "#{@scope}.#{param}", fn
 
 module.exports = new Settings 'clip-history',
   max:
@@ -28,11 +41,6 @@ module.exports = new Settings 'clip-history',
     type: 'boolean'
     default: true
     description: "Flash when pasted"
-  flashPersist:
-    order: 22
-    type: 'boolean'
-    default: false
-    description: "Flash persisted"
   flashDurationMilliSeconds:
     order: 23
     type: 'integer'
@@ -40,6 +48,11 @@ module.exports = new Settings 'clip-history',
     description: "Duration for flash"
   adjustIndent:
     order: 25
+    type: 'boolean'
+    default: true
+    description: "Keep layout of pasted text by adjusting indentation."
+  doNormalPasteWhenMultipleCursors:
+    order: 26
     type: 'boolean'
     default: true
     description: "Keep layout of pasted text by adjusting indentation."
