@@ -2,14 +2,13 @@
 
 Paste from clipboard history like emacs' kill-ring
 
-![gif](https://raw.githubusercontent.com/t9md/t9md/2453c4abea50741938bce79b9087e4845e8b66d1/img/atom-clip-history.gif)
+![gif](https://raw.githubusercontent.com/t9md/t9md/021f6b3e37b4296d3464d66e54a02bc2907a79f0/img/atom-clip-history.gif)
 
 # Features
 
 * Paste old clipboard entry.
 * Keep layout of multi line text when pasted(enabled by default).
 * Visually highlight(flash) pasted range.
-* Also you can choose flash to be persisted until cursor move.
 * Support multiple cursor.
 
 # Commands
@@ -45,7 +44,7 @@ e.g.
 
 # TODO
 
-* [x] Make configurable flash duration.
+* [x] Configurable flash duration.
 * [x] Multi cursor support
 * [x] Use marker instead of range to track original range in multi cursor situation.
 * [x] Adjust proceeding space to keep layout.

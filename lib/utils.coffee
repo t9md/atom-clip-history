@@ -25,7 +25,7 @@ removeIndent = (text) ->
   text.replace(///^#{indent}///gm, '')
 
 addIndent = (text, indent) ->
-  text.replace ///^///gm, (m, offset) ->
+  text.replace /^/gm, (m, offset) ->
     if offset is 0 then m else indent
 
 adjustIndent = (text, {indent, softTabs, tabLength}) ->
@@ -37,18 +37,6 @@ adjustIndent = (text, {indent, softTabs, tabLength}) ->
   else
     space2tab(text, tabLength)
 
-flash = (editor, marker, options) ->
-  {color, duration, persist, class: klass} = options
-  marker = marker.copy() unless persist
-  editor.decorateMarker marker,
-    type: 'highlight'
-    class: klass
-
-  unless persist
-    setTimeout  ->
-      marker.destroy()
-    , duration
-
 # Return function to restore original function.
 spyClipBoardWrite = (fn) ->
   atomClipboardWrite = atom.clipboard.write
@@ -58,4 +46,4 @@ spyClipBoardWrite = (fn) ->
   ->
     atom.clipboard.write = atomClipboardWrite
 
-module.exports = {adjustIndent, flash, spyClipBoardWrite}
+module.exports = {adjustIndent, spyClipBoardWrite}

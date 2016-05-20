@@ -1,7 +1,8 @@
 {CompositeDisposable} = require 'atom'
 _ = require 'underscore-plus'
 
-{adjustIndent, flash, spyClipBoardWrite} = require './utils'
+{adjustIndent, spyClipBoardWrite} = require './utils'
+
 settings = require './settings'
 History = require './history'
 
@@ -11,36 +12,20 @@ module.exports =
   activate: (state) ->
     @history = new History
     @markerByCursor = new Map
-    @restoreClipBoardWrite = spyClipBoardWrite(@history.add)
+    addHistory = @history.add.bind(@history)
+    @restoreClipBoardWrite = spyClipBoardWrite(addHistory)
 
     settings.notifyOldParamsAndDelete()
-    @subscriptions = subs = new CompositeDisposable
-    subs.add atom.commands.add 'atom-text-editor',
+    @subscriptions = new CompositeDisposable
+
+    @subscribe atom.commands.add 'atom-text-editor',
       'clip-history:paste': => @paste('older')
       'clip-history:paste-newer': => @paste('newer')
       'clip-history:paste-last': => @paste('lastPasted')
-      'clip-history:clear': => @history.init()
+      'clip-history:clear': => @history.reset()
 
-    # Reset pasteState when pane item changed
-    subs.add atom.workspace.onDidChangeActivePaneItem (item) =>
-      @resetPasteState()
-    @observeCursorPositionChange()
-
-  # Reset pasteState when cursor position changed
-  observeCursorPositionChange: ->
-    subs = @subscriptions
-    subs.add atom.workspace.observeTextEditors (editor) =>
-      return if editor.isMini()
-      editorSubs = new CompositeDisposable
-      editorSubs.add editor.onDidChangeCursorPosition =>
-        if not @isPasting() and (@markerByCursor.size > 0)
-          @resetPasteState()
-
-      editorSubs.add editor.onDidDestroy ->
-        editorSubs.dispose()
-        subs.remove(editorSubs)
-
-      subs.add editorSubs
+  subscribe: (args) ->
+    @subscriptions.add(args)
 
   deactivate: ->
     @restoreClipBoardWrite()
@@ -49,20 +34,21 @@ module.exports =
     {@lastPastedText, @subscriptions, @restoreClipBoardWrite} = {}
 
   resetPasteState: ->
-    @markerByCursor.forEach (marker) ->
-      marker.destroy()
+    @markerByCursor.forEach((marker) -> marker.destroy())
     @markerByCursor.clear()
     @history.resetIndex()
 
-  startPaste: (fn) ->
-    @pasting = true
+  startPaste: (editor, fn) ->
+    disposable = editor.onDidChangeCursorPosition =>
+      if not @pasting and (@markerByCursor.size > 0)
+        @resetPasteState()
+        disposable.dispose()
+
     try
+      @pasting = true
       fn()
     finally
       @pasting = false
-
-  isPasting: ->
-    @pasting
 
   paste: (which) ->
     editor = atom.workspace.getActiveTextEditor()
@@ -71,7 +57,7 @@ module.exports =
       return
 
     if @markerByCursor.size is 0 # means first paste
-      # system's clipboad can be updated in other place.
+      # system's clipboad can be updated in outer world.
       @history.add atom.clipboard.read()
 
     if which is 'lastPasted'
@@ -81,9 +67,9 @@ module.exports =
       text = @history.get(which).text
     return unless text
 
-    @startPaste =>
-      editor.transact =>
-        @setText(c, text) for c in editor.getCursors()
+    @startPaste editor, =>
+      for cursor in editor.getCursors()
+        @setText(cursor, text)
       editor.scrollToCursorPosition {center: false}
     @lastPastedText = text
 
@@ -96,22 +82,22 @@ module.exports =
   setText: (cursor, text) ->
     editor = cursor.editor
     range = @getPasteRangeForCursor(cursor)
-    if settings.get('adjustIndent')
+    if settings.get('adjustIndent') and text.endsWith("\n")
       text = adjustIndent text,
         indent: _.multiplyString(' ', range.start.column) ? ''
         softTabs: editor.getSoftTabs()
         tabLength: editor.getTabLength()
 
     range = editor.setTextInBufferRange(range, text)
-    marker = editor.markBufferRange range,
-      invalidate: 'never'
-      persistent: false
-
+    marker = editor.markBufferRange(range, invalidate: 'never')
     @markerByCursor.get(cursor)?.destroy()
     @markerByCursor.set(cursor, marker)
+    @flash(editor, marker.copy()) if settings.get('flashOnPaste')
 
-    if settings.get('flashOnPaste')
-      flash editor, marker,
-        class: 'clip-history-pasted'
-        duration: settings.get('flashDurationMilliSeconds')
-        persist: settings.get('flashPersist')
+  flash: (editor, marker) ->
+    options = {type: 'highlight', class: 'clip-history-pasted'}
+    timeout = settings.get('flashDurationMilliSeconds')
+    editor.decorateMarker(marker, options)
+    setTimeout  ->
+      marker.destroy()
+    , timeout
