@@ -1,3 +1,7 @@
+## 0.2.0
+- Cleanup
+- Breaking: Remove `flashPersist` settings.
+
 ## 0.1.12 - Improve
 * [BUG]: Now clear paste state on active item change.
 * [BUG]: Cause exception when cursor added in-middle-of sequential-paste.

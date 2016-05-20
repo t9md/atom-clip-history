@@ -1,6 +1,7 @@
 _ = require 'underscore-plus'
 class Settings
   constructor: (@scope, @config) ->
+    @notifyOldParamsAndDelete()
 
   notifyOldParamsAndDelete: ->
     paramsSupported = _.keys(@config)
@@ -14,7 +15,7 @@ class Settings
       #{@scope}: Following configs are no longer supported.__
       Automatically removed from your `connfig.cson`__
       #{deletedParamsText}
-    """.replace(/_/g, " ")
+      """.replace(/_/g, " ")
     atom.notifications.addWarning(message, dismissable: true)
 
   has: (param) ->
