@@ -1,3 +1,6 @@
+## 0.2.1
+- Add fash highlight style for non-shadowDOM user
+
 ## 0.2.0
 - Cleanup
 - Breaking: Remove `flashPersist` settings.
