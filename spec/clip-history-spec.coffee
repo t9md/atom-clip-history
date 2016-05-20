@@ -9,12 +9,11 @@ describe "clip-history", ->
   getTexts = ->
     _.pluck(getEntries(), 'text')
 
-  dispatchCommand = (element, command) ->
-    atom.commands.dispatch element, command
+  dispatchCommand = (target, command) ->
+    atom.commands.dispatch target, command
 
   beforeEach ->
     atom.config.set('clip-history.max', 3)
-    # addCustomMatchers(this)
     atomClipboardWrite = atom.clipboard.write
     workspaceElement = atom.views.getView(atom.workspace)
     waitsForPromise ->
@@ -28,7 +27,7 @@ describe "clip-history", ->
         editor = e
         editorElement = atom.views.getView(editor)
 
-  describe "initialState", ->
+  describe "activate/dieactivate", ->
     describe "when activated", ->
       it "history entries is empty", ->
         expect(getEntries()).toHaveLength 0
@@ -58,13 +57,7 @@ describe "clip-history", ->
       atom.clipboard.write 'four'
       expect(getTexts()).toEqual ['four', 'three', 'two']
 
-  describe "clip-history:clear", ->
-    beforeEach ->
-      data = [ "one", "two", "three" ]
-      atom.clipboard.write(text) for text in data
-      expect(getTexts()).toEqual ['three', 'two', 'one']
-
-    it "clear entries", ->
+    it "can clear entries", ->
       dispatchCommand(editorElement, 'clip-history:clear')
       expect(getTexts()).toEqual []
 

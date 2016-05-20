@@ -58,7 +58,7 @@ module.exports =
 
     if @markerByCursor.size is 0 # means first paste
       # system's clipboad can be updated in outer world.
-      @history.add atom.clipboard.read()
+      @history.add(atom.clipboard.read())
 
     if which is 'lastPasted'
       @resetPasteState()
@@ -69,8 +69,8 @@ module.exports =
 
     @startPaste editor, =>
       for cursor in editor.getCursors()
-        @setText(cursor, text)
-      editor.scrollToCursorPosition {center: false}
+        @insertText(cursor, text)
+      editor.scrollToCursorPosition(center: false)
     @lastPastedText = text
 
   getPasteRangeForCursor: (cursor) ->
@@ -79,12 +79,12 @@ module.exports =
     else
       cursor.selection.getBufferRange()
 
-  setText: (cursor, text) ->
+  insertText: (cursor, text) ->
     editor = cursor.editor
     range = @getPasteRangeForCursor(cursor)
     if settings.get('adjustIndent') and text.endsWith("\n")
       text = adjustIndent text,
-        indent: _.multiplyString(' ', range.start.column) ? ''
+        indent: ' '.repeat(range.start.column)
         softTabs: editor.getSoftTabs()
         tabLength: editor.getTabLength()
 

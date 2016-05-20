@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 class Settings
   constructor: (@scope, @config) ->
-    @notifyOldParamsAndDelete()
 
   notifyOldParamsAndDelete: ->
     paramsSupported = _.keys(@config)
