@@ -26,9 +26,10 @@ class History
     @resetIndex()
 
   get: (which) ->
-    index = switch which
-      when 'newer' then @index - 1
-      when 'older' then @index + 1
+    index = @index
+    switch which
+      when 'newer' then index--
+      when 'older' then index++
     @index = @getIndex(index)
     @entries[@index]
 

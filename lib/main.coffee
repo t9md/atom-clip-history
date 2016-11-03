@@ -9,7 +9,7 @@ History = require './history'
 module.exports =
   config: settings.config
 
-  activate: (state) ->
+  activate: ->
     @history = new History
     @markerByCursor = new Map
     addHistory = @history.add.bind(@history)
@@ -18,10 +18,11 @@ module.exports =
     settings.notifyOldParamsAndDelete()
     @subscriptions = new CompositeDisposable
 
+    paste = @paste.bind(this)
     @subscribe atom.commands.add 'atom-text-editor',
-      'clip-history:paste': => @paste('older')
-      'clip-history:paste-newer': => @paste('newer')
-      'clip-history:paste-last': => @paste('lastPasted')
+      'clip-history:paste': -> paste(@getModel(), 'older')
+      'clip-history:paste-newer': -> paste(@getModel(), 'newer')
+      'clip-history:paste-last': -> paste(@getModel(), 'lastPasted')
       'clip-history:clear': => @history.reset()
 
   subscribe: (args) ->
@@ -38,20 +39,22 @@ module.exports =
     @markerByCursor.clear()
     @history.resetIndex()
 
-  startPaste: (editor, fn) ->
-    disposable = editor.onDidChangeCursorPosition =>
-      if not @pasting and (@markerByCursor.size > 0)
+  observeCursorChange: (editor) ->
+    return if @cursorChangeDisposable?
+    @cursorChangeDisposable = editor.onDidChangeCursorPosition =>
+      unless @pasting
         @resetPasteState()
-        disposable.dispose()
+        @cursorChangeDisposable.dispose()
+        @cursorChangeDisposable = null
 
+  startPaste: (fn) ->
     try
       @pasting = true
       fn()
     finally
       @pasting = false
 
-  paste: (which) ->
-    editor = atom.workspace.getActiveTextEditor()
+  paste: (editor, which) ->
     if editor.hasMultipleCursors() and settings.get('doNormalPasteWhenMultipleCursors')
       editor.pasteText()
       return
@@ -67,7 +70,8 @@ module.exports =
       text = @history.get(which).text
     return unless text
 
-    @startPaste editor, =>
+    @observeCursorChange(editor)
+    @startPaste =>
       for cursor in editor.getCursors()
         @insertText(cursor, text)
       editor.scrollToCursorPosition(center: false)
@@ -88,16 +92,16 @@ module.exports =
         softTabs: editor.getSoftTabs()
         tabLength: editor.getTabLength()
 
-    range = editor.setTextInBufferRange(range, text)
-    marker = editor.markBufferRange(range, invalidate: 'never')
     @markerByCursor.get(cursor)?.destroy()
-    @markerByCursor.set(cursor, marker)
-    @flash(editor, marker.copy()) if settings.get('flashOnPaste')
 
-  flash: (editor, marker) ->
-    options = {type: 'highlight', class: 'clip-history-pasted'}
-    timeout = settings.get('flashDurationMilliSeconds')
-    editor.decorateMarker(marker, options)
+    newTextRange = editor.setTextInBufferRange(range, text)
+    marker = editor.markBufferRange(newTextRange)
+    @markerByCursor.set(cursor, marker)
+    if settings.get('flashOnPaste')
+      @flash(editor, marker.copy(), settings.get('flashDurationMilliSeconds'))
+
+  flash: (editor, marker, timeout=0) ->
+    editor.decorateMarker(marker, type: 'highlight', class: 'clip-history-pasted')
     setTimeout  ->
       marker.destroy()
     , timeout

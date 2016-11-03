@@ -1,6 +1,17 @@
 _ = require 'underscore-plus'
 class Settings
   constructor: (@scope, @config) ->
+    # Inject order props to display orderd in setting-view
+    for name, i in Object.keys(@config)
+      @config[name].order = i
+
+    # Automatically infer and inject `type` of each config parameter.
+    for key, object of @config
+      object.type = switch
+        when Number.isInteger(object.default) then 'integer'
+        when typeof(object.default) is 'boolean' then 'boolean'
+        when typeof(object.default) is 'string' then 'string'
+        when Array.isArray(object.default) then 'array'
 
   notifyOldParamsAndDelete: ->
     paramsSupported = _.keys(@config)
@@ -31,28 +42,18 @@ class Settings
 
 module.exports = new Settings 'clip-history',
   max:
-    order: 11
-    type: 'integer'
     default: 10
     minimum: 1
     description: "Number of history to remember"
   flashOnPaste:
-    order: 21
-    type: 'boolean'
     default: true
     description: "Flash when pasted"
   flashDurationMilliSeconds:
-    order: 23
-    type: 'integer'
     default: 300
     description: "Duration for flash"
   adjustIndent:
-    order: 25
-    type: 'boolean'
     default: true
     description: "Keep layout of pasted text by adjusting indentation."
   doNormalPasteWhenMultipleCursors:
-    order: 26
-    type: 'boolean'
     default: true
     description: "Keep layout of pasted text by adjusting indentation."
