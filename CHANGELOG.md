@@ -1,3 +1,6 @@
+## 0.2.2
+- Fix: Deprecated warning, remove `::shadow` from style #9.
+
 ## 0.2.1
 - Add fash highlight style for non-shadowDOM user
 
