@@ -1,9 +1,7 @@
 @import "syntax-variables";
 
-atom-text-editor {
-  &, &::shadow {
-    .clip-history-pasted .region {
-      background-color: @syntax-selection-color;
-    }
+atom-text-editor.editor {
+  .clip-history-pasted .region {
+    background-color: @syntax-selection-color;
   }
 }

@@ -7,7 +7,7 @@
   "repository": "https://github.com/t9md/atom-clip-history",
   "license": "MIT",
   "engines": {
-    "atom": ">=0.174.0 <2.0.0"
+    "atom": "^1.13.0-beta1"
   },
   "dependencies": {
     "underscore-plus": "^1.6.6"
