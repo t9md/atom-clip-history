@@ -1,3 +1,8 @@
+## 0.3.0
+- Breaking, Improve: flash-style
+  - Improve: Tweak flash style using keyframe animation
+  - Breaking: Deprecate `flashDurationMilliSeconds` setting.
+
 ## 0.2.2
 - Fix: Deprecated warning, remove `::shadow` from style #9.
 
