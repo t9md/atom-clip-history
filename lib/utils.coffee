@@ -28,7 +28,10 @@ addIndent = (text, indent) ->
   text.replace /^/gm, (m, offset) ->
     if offset is 0 then m else indent
 
-adjustIndent = (text, {indent, softTabs, tabLength}) ->
+adjustIndent = (text, {editor, indent}) ->
+  softTabs = editor.getSoftTabs()
+  tabLength = editor.getTabLength()
+  
   text = tab2space(text, tabLength)
   text = removeIndent(text)
   text = addIndent(text, indent)

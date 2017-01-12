@@ -59,23 +59,20 @@ describe "clip-history", ->
 
     it "can clear entries", ->
       dispatchCommand(editorElement, 'clip-history:clear')
-      expect(getTexts()).toEqual []
+      expect(getTexts()).toEqual([])
 
   describe "clip-history:paste", ->
-    setPosition = (point) ->
-      editor.setCursorBufferPosition point
-
     describe 'paste', ->
       it 'paste older entry on each execution', ->
         for point in [[0, 0], [1, 0], [2, 0]]
-          setPosition(point)
+          editor.setCursorBufferPosition(point)
           editor.selectWordsContainingCursors()
           dispatchCommand(editorElement, 'core:copy')
 
         data = ['three', 'two', 'one']
         expect(getTexts()).toEqual data
 
-        setPosition [5, 0]
+        editor.setCursorBufferPosition([5, 0])
         for text in [data..., data...]
           dispatchCommand(editorElement, 'clip-history:paste')
-          expect(editor.getWordUnderCursor()).toEqual text
+          expect(editor.getWordUnderCursor()).toEqual(text)

@@ -48,9 +48,6 @@ module.exports = new Settings 'clip-history',
   flashOnPaste:
     default: true
     description: "Flash when pasted"
-  flashDurationMilliSeconds:
-    default: 300
-    description: "Duration for flash"
   adjustIndent:
     default: true
     description: "Keep layout of pasted text by adjusting indentation."

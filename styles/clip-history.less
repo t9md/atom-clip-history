@@ -1,5 +1,18 @@
 @import "syntax-variables";
 
+@flash-background-color: contrast(
+  @syntax-background-color,
+  darken(@syntax-selection-color, 3%),
+  lighten(@syntax-selection-color, 3%)
+);
+
+@keyframes clip-history-pasted-flash {
+  from { background-color: @flash-background-color; }
+  to { background-color: transparent; }
+}
+
 atom-text-editor.editor .clip-history-pasted .region {
-  background-color: @syntax-selection-color;
+  animation-name: clip-history-pasted-flash;
+  animation-iteration-count: 1;
+  animation-duration: 1s;
 }

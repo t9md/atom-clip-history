@@ -13,16 +13,16 @@ class History
   resetIndex: ->
     @index = -1
 
-  # FIFO: newer comes first.
+  destroy: ->
+    [@entries, @index] = []
+
   add: (text, metadata) ->
     # skip when empty or same text
     return if _.isEmpty(text) or (text is @entries[0]?.text)
     @entries.unshift {text, metadata}
-    @entries = _.uniq(@entries, (e) -> e.text)
+    @entries = _.uniq(@entries, (entry) -> entry.text)
 
-    maxEntries = settings.get('max')
-    if @entries.length > maxEntries
-      @entries.splice(maxEntries)
+    @entries.splice(settings.get('max'))
     @resetIndex()
 
   get: (which) ->
