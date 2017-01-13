@@ -25,11 +25,10 @@ module.exports =
       @history.destroy()
       [@pasteArea, @history] = []
 
-    paste = @paste.bind(this)
     @subscriptions.add atom.commands.add 'atom-text-editor',
-      'clip-history:paste': -> paste(@getModel(), 'older')
-      'clip-history:paste-newer': -> paste(@getModel(), 'newer')
-      'clip-history:paste-last': -> paste(@getModel(), 'lastPasted')
+      'clip-history:paste': => @paste('older')
+      'clip-history:paste-newer': => @paste('newer')
+      'clip-history:paste-last': => @paste('lastPasted')
       'clip-history:clear': => @history.reset()
 
   deactivate: ->
@@ -55,7 +54,8 @@ module.exports =
     finally
       @pasting = false
 
-  paste: (editor, which) ->
+  paste: (which) ->
+    editor = atom.workspace.getActiveTextEditor()
     if editor.hasMultipleCursors() and settings.get('doNormalPasteWhenMultipleCursors')
       editor.pasteText()
       return
