@@ -1,3 +1,6 @@
+## 0.4.0: WIP
+- Reduce activation time, by reducing disk-IO on startup.
+
 ## 0.3.0
 - Breaking, Improve: flash-style
   - Improve: Tweak flash style using keyframe animation
