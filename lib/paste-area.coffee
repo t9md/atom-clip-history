@@ -1,5 +1,4 @@
 module.exports =
-
 class PasteArea
   constructor: ->
     @markerByCursor = new Map

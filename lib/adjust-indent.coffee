@@ -1,15 +1,13 @@
-_ = require 'underscore-plus'
-
 # Convert leading tab to space. support multiline string.
 tab2space = (text, tabLength) ->
   text.replace /^[\t ]+/gm, (text) ->
-    text.replace /\t/g, _.multiplyString(' ', tabLength)
+    text.replace(/\t/g, ' '.repeat(tabLength))
 
 # Convert leading space to tab. support multiline string.
 space2tab = (text, tabLength) ->
   text.replace /^ +/gm, (s) ->
-    tabs = _.multiplyString '\t', Math.floor(s.length / tabLength)
-    spaces = _.multiplyString ' ', (s.length % tabLength)
+    tabs = '\t'.repeat(Math.floor(s.length / tabLength))
+    spaces = ' '.repeat(s.length % tabLength)
     tabs + spaces
 
 # Return shortest leading space string in multiline string.
@@ -17,8 +15,7 @@ getShortestLeadingSpace = (text) ->
   if text.match(/^[^ ]/gm)
     ''
   else
-    spaces = text.match(/^ +/gm)
-    _.sortBy(spaces, (e) -> e.length)[0]
+    text.match(/^ +/gm).sort((a, b) -> a.length - b.length)[0]
 
 removeIndent = (text) ->
   indent = getShortestLeadingSpace(text)
@@ -28,10 +25,10 @@ addIndent = (text, indent) ->
   text.replace /^/gm, (m, offset) ->
     if offset is 0 then m else indent
 
-adjustIndent = (text, {editor, indent}) ->
+module.exports = adjustIndent = (text, {editor, indent}) ->
   softTabs = editor.getSoftTabs()
   tabLength = editor.getTabLength()
-  
+
   text = tab2space(text, tabLength)
   text = removeIndent(text)
   text = addIndent(text, indent)
@@ -39,14 +36,3 @@ adjustIndent = (text, {editor, indent}) ->
     text
   else
     space2tab(text, tabLength)
-
-# Return function to restore original function.
-spyClipBoardWrite = (fn) ->
-  atomClipboardWrite = atom.clipboard.write
-  atom.clipboard.write = (params...) ->
-    fn(params...)
-    atomClipboardWrite.call(atom.clipboard, params...)
-  ->
-    atom.clipboard.write = atomClipboardWrite
-
-module.exports = {adjustIndent, spyClipBoardWrite}

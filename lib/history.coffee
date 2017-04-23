@@ -1,6 +1,3 @@
-_ = require 'underscore-plus'
-settings = require './settings'
-
 module.exports =
 class History
   constructor: ->
@@ -18,11 +15,16 @@ class History
 
   add: (text, metadata) ->
     # skip when empty or same text
-    return if _.isEmpty(text) or (text is @entries[0]?.text)
+    return if (text.length is 0) or (text is @entries[0]?.text)
     @entries.unshift {text, metadata}
-    @entries = _.uniq(@entries, (entry) -> entry.text)
 
-    @entries.splice(settings.get('max'))
+    # Unique by entry.text
+    entries = []
+    seen = {}
+    for entry in @entries
+      seen[entry.text] ?= (entries.push(entry))?
+    @entries = entries
+    @entries.splice(atom.config.get("clip-history.max"))
     @resetIndex()
 
   get: (which) ->
