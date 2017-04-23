@@ -1,5 +1,3 @@
-_ = require 'underscore-plus'
-
 describe "clip-history", ->
   [editor, editorElement, main, workspaceElement, atomClipboardWrite] = []
   [pathSample1, pathSample2] = []
@@ -7,7 +5,7 @@ describe "clip-history", ->
     main.history.entries
 
   getTexts = ->
-    _.pluck(getEntries(), 'text')
+    getEntries().map((e) -> e.text)
 
   dispatchCommand = (target, command) ->
     atom.commands.dispatch target, command
@@ -29,8 +27,8 @@ describe "clip-history", ->
 
   describe "activate/dieactivate", ->
     describe "when activated", ->
-      it "history entries is empty", ->
-        expect(getEntries()).toHaveLength 0
+      it "history is not defined", ->
+        expect(main.history).not.toBeDefined()
 
       it "replace original atom.clipboard.write", ->
         expect(atomClipboardWrite).not.toBe(atom.clipboard.write)

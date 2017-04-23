@@ -1,62 +1,69 @@
-{CompositeDisposable, Disposable} = require 'atom'
-_ = require 'underscore-plus'
+adjustIndent = null
 
-{adjustIndent, spyClipBoardWrite} = require './utils'
-
-settings = require './settings'
-History = require './history'
-PasteArea = require './paste-area'
+CONFIG =
+  max:
+    order: 0
+    type: 'integer'
+    default: 10
+    minimum: 1
+    description: "Number of history to remember"
+  flashOnPaste:
+    order: 1
+    type: 'boolean'
+    default: true
+    description: "Flash when pasted"
+  adjustIndent:
+    order: 2
+    type: 'boolean'
+    default: true
+    description: "Keep layout of pasted text by adjusting indentation."
+  doNormalPasteWhenMultipleCursors:
+    order: 3
+    type: 'boolean'
+    default: true
+    description: "Keep layout of pasted text by adjusting indentation."
 
 module.exports =
-  config: settings.config
+  config: CONFIG
   lastPastedText: null
+  pasting: false
 
   activate: ->
-    settings.notifyOldParamsAndDelete()
+    @atomClipboardWrite = atom.clipboard.write
+    atom.clipboard.write = (args...) =>
+      @history ?= @createHistory()
+      @history.add(args...)
+      @atomClipboardWrite.call(atom.clipboard, args...)
 
-    @history = new History
-    addHistory = @history.add.bind(@history)
-    @restoreClipBoardWrite = spyClipBoardWrite(addHistory)
-    @pasteArea = new PasteArea
-
-    @subscriptions = new CompositeDisposable
-    @subscriptions.add new Disposable =>
-      @pasteArea.destroy()
-      @history.destroy()
-      [@pasteArea, @history] = []
-
-    @subscriptions.add atom.commands.add 'atom-text-editor',
+    @comandsDisposable = atom.commands.add 'atom-text-editor',
       'clip-history:paste': => @paste('older')
       'clip-history:paste-newer': => @paste('newer')
       'clip-history:paste-last': => @paste('lastPasted')
-      'clip-history:clear': => @history.reset()
+      'clip-history:clear': => @history?.reset()
 
   deactivate: ->
-    @restoreClipBoardWrite()
-    @subscriptions.dispose()
-    [@lastPastedText, @subscriptions, @restoreClipBoardWrite] = []
+    atom.clipboard.write = @atomClipboardWrite
+    @pasteArea?.destroy()
+    @history?.destroy()
+    @comandsDisposable.dispose()
+    [@pasteArea, @history, @lastPastedText, @comandsDisposable] = []
+
+  createHistory: ->
+    new (require('./history'))
+
+  createPasteArea: ->
+    new (require('./paste-area'))
 
   resetPasteState: ->
-    @pasteArea.clear()
-    @history.resetIndex()
-
-  observeCursorChange: (editor) ->
-    editor.onDidChangeCursorPosition =>
-      unless @pasting
-        @resetPasteState()
-        @cursorChangeDisposable.dispose()
-        @cursorChangeDisposable = null
-
-  startPaste: (fn) ->
-    try
-      @pasting = true
-      fn()
-    finally
-      @pasting = false
+    @pasteArea?.clear()
+    @history?.resetIndex()
 
   paste: (which) ->
+    @history ?= @createHistory()
+    @pasteArea ?= @createPasteArea()
+
     editor = atom.workspace.getActiveTextEditor()
-    if editor.hasMultipleCursors() and settings.get('doNormalPasteWhenMultipleCursors')
+    if editor.hasMultipleCursors() and atom.config.get("clip-history.doNormalPasteWhenMultipleCursors")
       editor.pasteText()
       return
 
@@ -71,23 +78,30 @@ module.exports =
       text = @history.get(which).text
     return unless text
 
-    @cursorChangeDisposable ?= @observeCursorChange(editor)
-    @startPaste =>
-      for cursor in editor.getCursors()
-        @insertText(cursor, text)
-      editor.scrollToCursorPosition(center: false)
-      @lastPastedText = text
+    @cursorChangeDisposable ?= editor.onDidChangeCursorPosition =>
+      unless @pasting
+        @resetPasteState()
+        @cursorChangeDisposable.dispose()
+        @cursorChangeDisposable = null
+
+    @pasting = true
+    for cursor in editor.getCursors()
+      @insertText(cursor, text)
+    editor.scrollToCursorPosition(center: false)
+    @lastPastedText = text
+    @pasting = false
 
   insertText: (cursor, text) ->
     editor = cursor.editor
     range = @pasteArea.getRange(cursor) ? cursor.selection.getBufferRange()
-    if settings.get('adjustIndent') and text.endsWith("\n")
+    if atom.config.get("clip-history.adjustIndent") and text.endsWith("\n")
+      adjustIndent ?= require('./adjust-indent')
       text = adjustIndent(text, {editor, indent: ' '.repeat(range.start.column)})
 
     marker = editor.markBufferRange(editor.setTextInBufferRange(range, text))
     @pasteArea.update(cursor, marker)
 
-    if settings.get('flashOnPaste')
+    if atom.config.get("clip-history.flashOnPaste")
       markerForFlash = marker.copy()
       editor.decorateMarker(markerForFlash, type: 'highlight', class: 'clip-history-pasted')
       setTimeout  ->
