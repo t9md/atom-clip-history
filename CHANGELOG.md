@@ -1,5 +1,6 @@
-## 0.4.0: WIP
+## 0.4.0:
 - Reduce activation time, by reducing disk-IO on startup. No longer use `underscore-plus`.
+  - Activation time diff: from 15ms to 3ms in my env.
 
 ## 0.3.0
 - Breaking, Improve: flash-style
