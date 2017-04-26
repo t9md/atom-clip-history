@@ -1,4 +1,4 @@
-## 0.4.0:
+## 0.4.0: WIP
 - Reduce activation time, by reducing disk-IO on startup. No longer use `underscore-plus`.
 
 ## 0.3.0
