@@ -1,30 +1,6 @@
 adjustIndent = null
 
-CONFIG =
-  max:
-    order: 0
-    type: 'integer'
-    default: 10
-    minimum: 1
-    description: "Number of history to remember"
-  flashOnPaste:
-    order: 1
-    type: 'boolean'
-    default: true
-    description: "Flash when pasted"
-  adjustIndent:
-    order: 2
-    type: 'boolean'
-    default: true
-    description: "Keep layout of pasted text by adjusting indentation."
-  doNormalPasteWhenMultipleCursors:
-    order: 3
-    type: 'boolean'
-    default: true
-    description: "Keep layout of pasted text by adjusting indentation."
-
 module.exports =
-  config: CONFIG
   lastPastedText: null
   pasting: false
 
