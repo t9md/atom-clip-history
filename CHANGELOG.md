@@ -1,5 +1,5 @@
-## 0.4.0: WIP
-- Reduce activation time, by reducing disk-IO on startup.
+## 0.4.0:
+- Reduce activation time, by reducing disk-IO on startup. No longer use `underscore-plus`.
 
 ## 0.3.0
 - Breaking, Improve: flash-style
