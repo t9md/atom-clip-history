@@ -19,6 +19,7 @@ Paste from clipboard history like emacs' kill-ring
 * `clip-history:clear`: Clear clipboard history.
 
 # Keymap
+
 No keymap by default.
 
 e.g.
@@ -32,8 +33,8 @@ e.g.
 
 # Modify flash duration
 
-From v0.3.0, `flashDurationMilliSeconds` config was removed to use better flashing animation by CSS keyframe.
-Default duration is one second, if you want this shorter, modify your `style.less`.
+From v0.3.0, `flashDurationMilliSeconds` config was removed to use better flashing animation by CSS keyframe. Default
+duration is one second, if you want this shorter, modify your `style.less`.
 
 ```less
 atom-text-editor.editor .clip-history-pasted .region {
@@ -50,6 +51,7 @@ atom-text-editor.editor .clip-history-pasted .region {
 * Support multiple cursor(disabled by default).
 
 # Similar packages
+
 * [kill-ring](https://atom.io/packages/kill-ring)
 * [clipboard-plus](https://atom.io/packages/clipboard-plus)
 * [clipboard-history](https://atom.io/packages/clipboard-history)
